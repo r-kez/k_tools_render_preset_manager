@@ -5,6 +5,8 @@ This tool is designed to streamline your workflow, allowing for quick, consisten
 
 **Location:** `Properties > Render Properties > Render Presets Manager`
 
+![Blender 4.2+](https://img.shields.io/badge/Blender-4.2%2B-orange?logo=blender)
+
 ---
 <p align="center">
   <img src="https://public-files.gumroad.com/95q6lpdd3phmljfsl5vxc0bclglq" alt="Render Preset Manager" />
