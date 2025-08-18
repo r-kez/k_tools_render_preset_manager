@@ -30,7 +30,7 @@ This tool is designed to streamline your workflow, allowing for quick, consisten
 2. In Blender, go to `Edit > Preferences > Add-ons`.  
 3. Click **Install from disk...** and select the downloaded `.zip` file.  
 4. Enable the addon by checking the box next to its name, **Render Preset Manager**.  
-5. Or simply, **drag and drop the `.zip` into Blender**.  
+###     Or simply, **drag and drop the `.zip` into Blender**.  
 
 ---
 
