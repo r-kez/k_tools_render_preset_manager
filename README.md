@@ -50,6 +50,10 @@ For the best experience, set up your personal presets folder:
 1. Go to `Edit > Preferences > Add-ons`.  
 2. Find **Render Preset Manager** and expand its options.  
 3. In the **User Presets Directory** field, select a folder on your computer where you want to store your personal presets.  
+4. In the **'Property Whitelist'** Set as **False** items that you **don't** want to be loaded by default. (all items are marked as True by default)
+
+Tip: Use the UI List Filter in the Botton Left of the List, as the Property List is massive this helps a lot!
+![Image](https://github.com/user-attachments/assets/1faad8d3-1a1e-4c84-8c9f-b2c04d7f91b2)
 
 ---
 
