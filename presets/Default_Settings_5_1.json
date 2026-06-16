@@ -1,0 +1,801 @@
+{
+    "preset_name": "Default Settings",
+    "description": "Default Settings for Blender 5.1",
+    "blender_version": "5.1.0 Alpha",
+    "render_presets": {
+        "RENDER_ENGINE": {
+            "render.engine": "BLENDER_EEVEE"
+        },
+        "CYCLES": {
+            "cycles.device": "CPU",
+            "cycles.shading_system": false,
+            "cycles.use_preview_adaptive_sampling": true,
+            "cycles.preview_adaptive_threshold": 0.10000000149011612,
+            "cycles.preview_samples": 1024,
+            "cycles.preview_adaptive_min_samples": 0,
+            "cycles.use_preview_denoising": false,
+            "cycles.preview_denoiser": "AUTO",
+            "cycles.preview_denoising_input_passes": "RGB_ALBEDO",
+            "cycles.preview_denoising_prefilter": "FAST",
+            "cycles.preview_denoising_quality": "BALANCED",
+            "cycles.preview_denoising_start_sample": 1,
+            "cycles.preview_denoising_use_gpu": true,
+            "cycles.use_adaptive_sampling": true,
+            "cycles.adaptive_threshold": 0.009999999776482582,
+            "cycles.samples": 4096,
+            "cycles.adaptive_min_samples": 0,
+            "cycles.time_limit": 0.0,
+            "cycles.use_denoising": true,
+            "cycles.denoiser": "OPENIMAGEDENOISE",
+            "cycles.denoising_input_passes": "RGB_ALBEDO_NORMAL",
+            "cycles.denoising_prefilter": "ACCURATE",
+            "cycles.denoising_quality": "HIGH",
+            "cycles.denoising_use_gpu": false,
+            "cycles.use_guiding": false,
+            "cycles.guiding_training_samples": 128,
+            "cycles.use_surface_guiding": true,
+            "cycles.use_volume_guiding": true,
+            "cycles.guiding_directional_sampling_type": "RIS",
+            "cycles.guiding_distribution_type": "PARALLAX_AWARE_VMM",
+            "cycles.guiding_roughness_threshold": 0.05000000074505806,
+            "cycles.surface_guiding_probability": 0.5,
+            "cycles.use_deterministic_guiding": true,
+            "cycles.use_guiding_direct_light": true,
+            "cycles.use_guiding_mis_weights": true,
+            "cycles.volume_guiding_probability": 0.5,
+            "cycles.use_light_tree": true,
+            "cycles.light_sampling_threshold": 0.009999999776482582,
+            "cycles.sampling_pattern": "TABULATED_SOBOL",
+            "cycles.seed": 0,
+            "cycles.use_animated_seed": false,
+            "cycles.auto_scrambling_distance": false,
+            "cycles.preview_scrambling_distance": false,
+            "cycles.scrambling_distance": 1.0,
+            "cycles.min_light_bounces": 0,
+            "cycles.min_transparent_bounces": 0,
+            "cycles.use_sample_subset": false,
+            "cycles.use_layer_samples": "USE",
+            "world.cycles.is_caustics_light": false,
+            "world.cycles.sample_map_resolution": 1024,
+            "world.cycles.sampling_method": "AUTOMATIC",
+            "cycles.sample_offset": 0,
+            "cycles.sample_subset_length": 2048,
+            "cycles.max_bounces": 12,
+            "cycles.diffuse_bounces": 4,
+            "cycles.glossy_bounces": 4,
+            "cycles.transmission_bounces": 12,
+            "cycles.volume_bounces": 0,
+            "cycles.transparent_max_bounces": 8,
+            "cycles.sample_clamp_direct": 0.0,
+            "cycles.sample_clamp_indirect": 10.0,
+            "cycles.blur_glossy": 1.0,
+            "cycles.caustics_reflective": true,
+            "cycles.caustics_refractive": true,
+            "cycles.use_fast_gi": false,
+            "cycles.fast_gi_method": "REPLACE",
+            "world.light_settings.ao_factor": 1.0,
+            "world.light_settings.distance": 10.0,
+            "cycles.ao_bounces": 1,
+            "cycles.ao_bounces_render": 1,
+            "cycles.volume_step_rate": 1.0,
+            "cycles.volume_preview_step_rate": 1.0,
+            "cycles.volume_max_steps": 1024,
+            "cycles.volume_biased": false,
+            "world.cycles.volume_interpolation": "LINEAR",
+            "world.cycles.volume_sampling": "EQUIANGULAR",
+            "world.cycles.volume_step_size": 1.0,
+            "cycles_curves.shape": "RIBBONS",
+            "cycles_curves.subdivisions": 2,
+            "render.hair_type": "STRAND",
+            "render.hair_subdiv": 0,
+            "cycles.dicing_rate": 1.0,
+            "cycles.preview_dicing_rate": 8.0,
+            "cycles.offscreen_dicing_scale": 4.0,
+            "cycles.max_subdivisions": 12,
+            "render.use_simplify": false,
+            "render.simplify_subdivision": 6,
+            "render.simplify_child_particles": 1.0,
+            "cycles.texture_limit": "OFF",
+            "render.simplify_volumes": 1.0,
+            "render.use_simplify_normals": false,
+            "render.simplify_subdivision_render": 6,
+            "render.simplify_child_particles_render": 1.0,
+            "cycles.texture_limit_render": "OFF",
+            "cycles.use_camera_cull": false,
+            "cycles.camera_cull_margin": 0.10000000149011612,
+            "cycles.use_distance_cull": false,
+            "cycles.distance_cull_margin": 50.0,
+            "render.simplify_gpencil": false,
+            "render.simplify_gpencil_onplay": false,
+            "render.simplify_gpencil_view_fill": true,
+            "render.simplify_gpencil_modifier": true,
+            "render.simplify_gpencil_shader_fx": true,
+            "render.simplify_gpencil_tint": true,
+            "render.simplify_gpencil_antialiasing": true,
+            "render.use_motion_blur": false,
+            "render.motion_blur_position": "CENTER",
+            "render.motion_blur_shutter": 0.5,
+            "cycles.rolling_shutter_type": "NONE",
+            "cycles.rolling_shutter_duration": 0.10000000149011612,
+            "render.motion_blur_shutter_curve": {
+                "curves": [
+                    {
+                        "index": 0,
+                        "points": [
+                            {
+                                "x": 0.0,
+                                "y": 1.0,
+                                "handle_type": "AUTO"
+                            },
+                            {
+                                "x": 0.5,
+                                "y": 1.0,
+                                "handle_type": "AUTO"
+                            },
+                            {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "handle_type": "AUTO"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "cycles.film_exposure": 1.0,
+            "cycles.film_transparent_glass": false,
+            "cycles.pixel_filter_type": "BLACKMAN_HARRIS",
+            "cycles.filter_width": 1.5,
+            "render.film_transparent": false,
+            "cycles.film_transparent_roughness": 0.10000000149011612,
+            "render.compositor_device": "CPU",
+            "render.compositor_precision": "AUTO",
+            "render.compositor_denoise_final_quality": "HIGH",
+            "render.threads_mode": "AUTO",
+            "render.threads": 12,
+            "cycles.use_auto_tile": true,
+            "cycles.tile_size": 2048,
+            "cycles.debug_use_spatial_splits": false,
+            "cycles.debug_use_compact_bvh": false,
+            "cycles.debug_bvh_time_steps": 0,
+            "cycles.debug_use_hair_bvh": true,
+            "render.use_persistent_data": false,
+            "render.preview_pixel_size": "AUTO",
+            "grease_pencil_settings.antialias_threshold": 1.0,
+            "render.use_freestyle": false,
+            "render.line_thickness_mode": "ABSOLUTE",
+            "render.line_thickness": 1.0,
+            "display_settings.display_device": "sRGB",
+            "view_settings.view_transform": "AgX",
+            "view_settings.look": "None",
+            "view_settings.exposure": 0.0,
+            "view_settings.gamma": 1.0,
+            "sequencer_colorspace_settings.name": "sRGB",
+            "view_settings.use_curve_mapping": false,
+            "view_settings.curve_mapping": {
+                "curves": [
+                    {
+                        "index": 0,
+                        "points": [
+                            {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "handle_type": "AUTO"
+                            },
+                            {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "handle_type": "AUTO"
+                            }
+                        ]
+                    },
+                    {
+                        "index": 1,
+                        "points": [
+                            {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "handle_type": "AUTO"
+                            },
+                            {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "handle_type": "AUTO"
+                            }
+                        ]
+                    },
+                    {
+                        "index": 2,
+                        "points": [
+                            {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "handle_type": "AUTO"
+                            },
+                            {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "handle_type": "AUTO"
+                            }
+                        ]
+                    },
+                    {
+                        "index": 3,
+                        "points": [
+                            {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "handle_type": "AUTO"
+                            },
+                            {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "handle_type": "AUTO"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "view_settings.use_white_balance": false,
+            "view_settings.white_balance_temperature": 6500.0,
+            "view_settings.white_balance_tint": 10.0,
+            "cycles.debug_use_cpu_sse42": true,
+            "cycles.debug_use_cpu_avx2": true,
+            "cycles.debug_bvh_layout": "EMBREE",
+            "cycles.debug_use_metal_adaptive_compile": false,
+            "cycles.debug_use_cuda_adaptive_compile": false,
+            "cycles.debug_use_optix_debug": false,
+            "cycles.debug_use_hip_adaptive_compile": false,
+            "cycles.debug_bvh_type": "DYNAMIC_BVH",
+            "cycles.direct_light_sampling_type": "MULTIPLE_IMPORTANCE_SAMPLING",
+            "view_settings.use_hdr_view": false
+        },
+        "BLENDER_EEVEE": {
+            "eevee.taa_samples": 16,
+            "eevee.use_taa_reprojection": true,
+            "eevee.use_shadow_jitter_viewport": false,
+            "eevee.taa_render_samples": 64,
+            "eevee.use_shadows": true,
+            "eevee.shadow_ray_count": 1,
+            "eevee.shadow_step_count": 6,
+            "eevee.use_volumetric_shadows": false,
+            "eevee.volumetric_shadow_samples": 16,
+            "eevee.shadow_resolution_scale": 1.0,
+            "eevee.light_threshold": 0.009999999776482582,
+            "eevee.clamp_surface_direct": 0.0,
+            "eevee.clamp_surface_indirect": 10.0,
+            "eevee.clamp_volume_direct": 0.0,
+            "eevee.clamp_volume_indirect": 9.99999993922529e-09,
+            "eevee.use_raytracing": false,
+            "eevee.ray_tracing_method": "SCREEN",
+            "eevee.ray_tracing_options.resolution_scale": "2",
+            "eevee.ray_tracing_options.screen_trace_quality": 0.25,
+            "eevee.ray_tracing_options.screen_trace_thickness": 0.20000000298023224,
+            "eevee.ray_tracing_options.use_denoise": true,
+            "eevee.ray_tracing_options.denoise_spatial": true,
+            "eevee.ray_tracing_options.denoise_temporal": true,
+            "eevee.ray_tracing_options.denoise_bilateral": true,
+            "eevee.ray_tracing_options.trace_max_roughness": 0.5,
+            "eevee.use_fast_gi": true,
+            "eevee.fast_gi_method": "GLOBAL_ILLUMINATION",
+            "eevee.fast_gi_resolution": "2",
+            "eevee.fast_gi_ray_count": 2,
+            "eevee.fast_gi_step_count": 8,
+            "eevee.fast_gi_quality": 0.25,
+            "eevee.fast_gi_distance": 0.0,
+            "eevee.fast_gi_thickness_near": 0.25,
+            "eevee.fast_gi_thickness_far": 0.7853981852531433,
+            "eevee.fast_gi_bias": 0.05000000074505806,
+            "eevee.gi_cubemap_resolution": "512",
+            "eevee.gi_diffuse_bounces": 3,
+            "eevee.gi_glossy_clamp": 0.0,
+            "eevee.gi_visibility_resolution": "32",
+            "grease_pencil_settings.antialias_threshold": 1.0,
+            "grease_pencil_settings.antialias_threshold_render": 0.25,
+            "grease_pencil_settings.aa_samples": 8,
+            "grease_pencil_settings.motion_blur_steps": 8,
+            "render.line_thickness_mode": "ABSOLUTE",
+            "render.line_thickness": 1.0,
+            "eevee.volumetric_tile_size": "8",
+            "eevee.volumetric_samples": 64,
+            "eevee.volumetric_sample_distribution": 0.800000011920929,
+            "eevee.volumetric_ray_depth": 16,
+            "eevee.volumetric_light_clamp": 0.0,
+            "eevee.use_volume_custom_range": false,
+            "eevee.volumetric_start": 0.10000000149011612,
+            "eevee.volumetric_end": 100.0,
+            "display_settings.display_device": "sRGB",
+            "view_settings.view_transform": "AgX",
+            "view_settings.look": "None",
+            "view_settings.exposure": 0.0,
+            "view_settings.gamma": 1.0,
+            "sequencer_colorspace_settings.name": "sRGB",
+            "display_settings.emulation": "AUTO",
+            "view_settings.white_balance_whitepoint": [
+                0.9993047714233398,
+                1.0003489255905151,
+                0.9985780119895935
+            ],
+            "view_settings.use_curve_mapping": false,
+            "view_settings.curve_mapping": {
+                "curves": [
+                    {
+                        "index": 0,
+                        "points": [
+                            {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "handle_type": "AUTO"
+                            },
+                            {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "handle_type": "AUTO"
+                            }
+                        ]
+                    },
+                    {
+                        "index": 1,
+                        "points": [
+                            {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "handle_type": "AUTO"
+                            },
+                            {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "handle_type": "AUTO"
+                            }
+                        ]
+                    },
+                    {
+                        "index": 2,
+                        "points": [
+                            {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "handle_type": "AUTO"
+                            },
+                            {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "handle_type": "AUTO"
+                            }
+                        ]
+                    },
+                    {
+                        "index": 3,
+                        "points": [
+                            {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "handle_type": "AUTO"
+                            },
+                            {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "handle_type": "AUTO"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "view_settings.white_balance_tint": 10.0,
+            "render.hair_type": "STRAND",
+            "render.hair_subdiv": 0,
+            "render.use_simplify": false,
+            "render.simplify_subdivision": 6,
+            "render.simplify_child_particles": 1.0,
+            "cycles.texture_limit": "OFF",
+            "render.simplify_volumes": 1.0,
+            "render.use_simplify_normals": false,
+            "render.simplify_subdivision_render": 6,
+            "render.simplify_child_particles_render": 1.0,
+            "cycles.texture_limit_render": "OFF",
+            "cycles.use_camera_cull": false,
+            "cycles.camera_cull_margin": 0.10000000149011612,
+            "cycles.use_distance_cull": false,
+            "cycles.distance_cull_margin": 50.0,
+            "render.simplify_gpencil": false,
+            "render.simplify_gpencil_onplay": false,
+            "render.simplify_gpencil_view_fill": true,
+            "render.simplify_gpencil_modifier": true,
+            "render.simplify_gpencil_shader_fx": true,
+            "render.simplify_gpencil_tint": true,
+            "render.simplify_gpencil_antialiasing": true,
+            "eevee.bokeh_max_size": 100.0,
+            "eevee.bokeh_threshold": 1.0,
+            "eevee.bokeh_neighbor_max": 10.0,
+            "eevee.use_bokeh_jittered": false,
+            "eevee.bokeh_overblur": 5.0,
+            "render.use_motion_blur": false,
+            "render.motion_blur_position": "CENTER",
+            "render.motion_blur_shutter": 0.5,
+            "render.motion_blur_shutter_curve": {
+                "curves": [
+                    {
+                        "index": 0,
+                        "points": [
+                            {
+                                "x": 0.0,
+                                "y": 1.0,
+                                "handle_type": "AUTO"
+                            },
+                            {
+                                "x": 0.5,
+                                "y": 1.0,
+                                "handle_type": "AUTO"
+                            },
+                            {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "handle_type": "AUTO"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "eevee.motion_blur_depth_scale": 100.0,
+            "eevee.motion_blur_max": 32,
+            "eevee.motion_blur_steps": 1,
+            "render.filter_size": 1.5,
+            "render.film_transparent": false,
+            "eevee.use_overscan": false,
+            "eevee.overscan_size": 3.0,
+            "render.use_high_quality_normals": false,
+            "eevee.shadow_pool_size": "512",
+            "eevee.gi_irradiance_pool_size": "16",
+            "render.preview_pixel_size": "AUTO",
+            "render.compositor_device": "CPU",
+            "render.compositor_precision": "AUTO",
+            "render.compositor_denoise_device": "AUTO",
+            "render.compositor_denoise_preview_quality": "BALANCED",
+            "render.compositor_denoise_final_quality": "HIGH",
+            "eevee.use_gtao": false,
+            "eevee.gtao_distance": 0.20000000298023224,
+            "eevee.gtao_factor": 1.0,
+            "eevee.gtao_quality": 0.25,
+            "eevee.use_bloom": true,
+            "eevee.bloom_threshold": 0.800000011920929,
+            "eevee.bloom_knee": 0.5,
+            "eevee.bloom_radius": 6.5,
+            "eevee.bloom_intensity": 0.05000000074505806,
+            "view_settings.use_hdr_view": false
+        },
+        "BLENDER_WORKBENCH": {
+            "grease_pencil_settings.antialias_threshold": 1.0,
+            "render.use_freestyle": false,
+            "render.line_thickness_mode": "ABSOLUTE",
+            "render.line_thickness": 1.0,
+            "display_settings.display_device": "sRGB",
+            "view_settings.view_transform": "AgX",
+            "view_settings.look": "None",
+            "view_settings.exposure": 0.0,
+            "view_settings.gamma": 1.0,
+            "sequencer_colorspace_settings.name": "sRGB",
+            "view_settings.use_curve_mapping": false,
+            "view_settings.curve_mapping": {
+                "curves": [
+                    {
+                        "index": 0,
+                        "points": [
+                            {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "handle_type": "AUTO"
+                            },
+                            {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "handle_type": "AUTO"
+                            }
+                        ]
+                    },
+                    {
+                        "index": 1,
+                        "points": [
+                            {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "handle_type": "AUTO"
+                            },
+                            {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "handle_type": "AUTO"
+                            }
+                        ]
+                    },
+                    {
+                        "index": 2,
+                        "points": [
+                            {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "handle_type": "AUTO"
+                            },
+                            {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "handle_type": "AUTO"
+                            }
+                        ]
+                    },
+                    {
+                        "index": 3,
+                        "points": [
+                            {
+                                "x": 0.0,
+                                "y": 0.0,
+                                "handle_type": "AUTO"
+                            },
+                            {
+                                "x": 1.0,
+                                "y": 1.0,
+                                "handle_type": "AUTO"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "view_settings.white_balance_tint": 10.0,
+            "render.use_simplify": false,
+            "render.simplify_subdivision": 6,
+            "render.simplify_child_particles": 1.0,
+            "render.simplify_volumes": 1.0,
+            "render.use_simplify_normals": false,
+            "render.simplify_subdivision_render": 6,
+            "render.simplify_child_particles_render": 1.0,
+            "render.simplify_gpencil": false,
+            "render.simplify_gpencil_onplay": false,
+            "render.simplify_gpencil_view_fill": true,
+            "render.simplify_gpencil_modifier": true,
+            "render.simplify_gpencil_shader_fx": true,
+            "render.simplify_gpencil_tint": true,
+            "render.simplify_gpencil_antialiasing": true,
+            "render.use_high_quality_normals": false,
+            "render.compositor_device": "CPU",
+            "render.compositor_precision": "AUTO",
+            "render.compositor_denoise_preview_quality": "BALANCED",
+            "render.compositor_denoise_final_quality": "HIGH",
+            "display.render_aa": "8",
+            "display.viewport_aa": "FXAA",
+            "display.shading.light": "STUDIO",
+            "display.shading.studio_light": "Default",
+            "display.shading.use_world_space_lighting": false,
+            "display.shading.studiolight_rotate_z": 0.0,
+            "display.shading.color_type": "MATERIAL",
+            "display.shading.single_color": [
+                0.800000011920929,
+                0.800000011920929,
+                0.800000011920929
+            ],
+            "display.shading.background_type": "THEME",
+            "display.shading.render_pass": "COMBINED",
+            "display.shading.studiolight_background_alpha": 0.0,
+            "display.shading.studiolight_background_blur": 0.0,
+            "display.shading.studiolight_intensity": 0.0,
+            "display.shading.type": "SOLID",
+            "display.shading.use_scene_lights": false,
+            "display.shading.use_scene_lights_render": false,
+            "display.shading.use_scene_world": false,
+            "display.shading.use_scene_world_render": false,
+            "display.shading.use_studiolight_view_rotation": true,
+            "display.shading.wireframe_color_type": "",
+            "render.hair_type": "STRAND",
+            "render.hair_subdiv": 0,
+            "display.shading.show_backface_culling": false,
+            "display.shading.show_xray": false,
+            "display.shading.xray_alpha": 0.5,
+            "display.shading.show_shadows": false,
+            "display.shading.shadow_intensity": 0.5,
+            "display.shading.show_xray_wireframe": false,
+            "display.shading.xray_alpha_wireframe": 0.0,
+            "display.shading.show_cavity": false,
+            "display.shading.cavity_type": "WORLD",
+            "display.shading.cavity_ridge_factor": 1.0,
+            "display.shading.cavity_valley_factor": 1.0,
+            "display.shading.curvature_ridge_factor": 0.0,
+            "display.shading.curvature_valley_factor": 0.0,
+            "display.shading.use_dof": false,
+            "display.shading.show_object_outline": false,
+            "display.shading.object_outline_color": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "display.shading.show_specular_highlight": true,
+            "render.film_transparent": false,
+            "view_settings.use_hdr_view": false
+        },
+        "BLENDER_OUTPUT": {
+            "render.resolution_x": 1920,
+            "render.resolution_y": 1080,
+            "render.resolution_percentage": 100,
+            "render.pixel_aspect_x": 1.0,
+            "render.pixel_aspect_y": 1.0,
+            "render.use_border": false,
+            "render.use_crop_to_border": false,
+            "render.fps": 24,
+            "render.fps_base": 1.0,
+            "frame_start": 1,
+            "frame_end": 250,
+            "frame_step": 1,
+            "render.frame_map_old": 100,
+            "render.frame_map_new": 100,
+            "render.ppm_base": 0.02539999969303608,
+            "render.ppm_factor": 72.0,
+            "render.use_multiview": false,
+            "render.views_format": "STEREO_3D",
+            "render.use_spherical_stereo": false,
+            "render.filepath": "/tmp\\",
+            "render.use_file_extension": true,
+            "render.use_render_cache": false,
+            "render.image_settings.file_format": "PNG",
+            "render.image_settings.media_type": "IMAGE",
+            "render.image_settings.color_mode": "RGBA",
+            "render.image_settings.color_depth": "8",
+            "render.image_settings.compression": 15,
+            "render.image_settings.quality": 90,
+            "render.image_settings.exr_codec": "ZIP",
+            "render.image_settings.use_exr_interleave": false,
+            "render.image_settings.tiff_codec": "DEFLATE",
+            "render.image_settings.jpeg2k_codec": "JP2",
+            "render.image_settings.use_jpeg2k_ycc": false,
+            "render.image_settings.use_jpeg2k_cinema_preset": false,
+            "render.image_settings.use_jpeg2k_cinema_48": false,
+            "render.image_settings.use_cineon_log": false,
+            "render.image_settings.cineon_black": 0,
+            "render.image_settings.cineon_gamma": 0.0,
+            "render.image_settings.cineon_white": 0,
+            "render.image_settings.use_preview": false,
+            "render.image_settings.has_linear_colorspace": false,
+            "render.image_settings.linear_colorspace_settings.is_data": false,
+            "render.image_settings.views_format": "INDIVIDUAL",
+            "render.image_settings.stereo_3d_format.display_mode": "ANAGLYPH",
+            "render.image_settings.stereo_3d_format.anaglyph_type": "RED_CYAN",
+            "render.image_settings.stereo_3d_format.interlace_type": "ROW_INTERLEAVED",
+            "render.image_settings.stereo_3d_format.use_interlace_swap": false,
+            "render.image_settings.stereo_3d_format.use_sidebyside_crosseyed": false,
+            "render.image_settings.stereo_3d_format.use_squeezed_frame": false,
+            "render.use_overwrite": true,
+            "render.use_placeholder": false,
+            "render.image_settings.color_management": "FOLLOW_SCENE",
+            "render.image_settings.display_settings.display_device": "sRGB",
+            "render.image_settings.display_settings.emulation": "AUTO",
+            "render.image_settings.view_settings.view_transform": "Standard",
+            "render.image_settings.view_settings.look": "None",
+            "render.image_settings.view_settings.exposure": 0.0,
+            "render.image_settings.view_settings.gamma": 1.0,
+            "render.image_settings.view_settings.use_curve_mapping": false,
+            "render.image_settings.view_settings.is_hdr": false,
+            "render.image_settings.view_settings.support_emulation": false,
+            "render.image_settings.view_settings.use_white_balance": false,
+            "render.image_settings.view_settings.white_balance_temperature": 0.0,
+            "render.image_settings.view_settings.white_balance_tint": 0.0,
+            "render.image_settings.linear_colorspace_settings.name": "",
+            "render.metadata_input": "SCENE",
+            "render.use_stamp_date": true,
+            "render.use_stamp_time": true,
+            "render.use_stamp_render_time": true,
+            "render.use_stamp_frame": true,
+            "render.use_stamp_frame_range": false,
+            "render.use_stamp_memory": false,
+            "render.use_stamp_hostname": false,
+            "render.use_stamp_camera": true,
+            "render.use_stamp_lens": false,
+            "render.use_stamp_scene": true,
+            "render.use_stamp_marker": false,
+            "render.use_stamp_filename": true,
+            "render.use_stamp_sequencer_strip": false,
+            "render.use_stamp_note": false,
+            "render.stamp_note_text": "",
+            "render.use_stamp": false,
+            "render.stamp_font_size": 12,
+            "render.stamp_foreground": [
+                0.800000011920929,
+                0.800000011920929,
+                0.800000011920929,
+                1.0
+            ],
+            "render.stamp_background": [
+                0.0,
+                0.0,
+                0.0,
+                0.25
+            ],
+            "render.use_stamp_labels": true,
+            "render.use_compositing": true,
+            "render.use_sequencer": true,
+            "render.sequencer_gl_preview": "SOLID",
+            "render.use_sequencer_override_scene_strip": false,
+            "render.dither_intensity": 1.0,
+            "render.ffmpeg.format": "MPEG1",
+            "render.ffmpeg.use_autosplit": false,
+            "render.ffmpeg.codec": "NONE",
+            "render.ffmpeg.use_lossless_output": false,
+            "render.ffmpeg.ffmpeg_prores_profile": "422_PROXY",
+            "render.ffmpeg.constant_rate_factor": "NONE",
+            "render.ffmpeg.ffmpeg_preset": "GOOD",
+            "render.ffmpeg.gopsize": 0,
+            "render.ffmpeg.use_max_b_frames": false,
+            "render.ffmpeg.max_b_frames": 0,
+            "render.ffmpeg.video_bitrate": 0,
+            "render.ffmpeg.minrate": 0,
+            "render.ffmpeg.maxrate": 0,
+            "render.ffmpeg.buffersize": 0,
+            "render.ffmpeg.muxrate": 0,
+            "render.ffmpeg.packetsize": 0,
+            "render.ffmpeg.audio_codec": "NONE",
+            "render.ffmpeg.audio_channels": "STEREO",
+            "render.ffmpeg.audio_mixrate": 48000,
+            "render.ffmpeg.audio_bitrate": 192,
+            "render.ffmpeg.audio_volume": 1.0
+        },
+        "BLENDER_VIEW_LAYER": {
+            "<ACTIVE_VIEW_LAYER>.use_pass_combined": true,
+            "<ACTIVE_VIEW_LAYER>.use_pass_z": false,
+            "<ACTIVE_VIEW_LAYER>.use_pass_mist": false,
+            "world.mist_settings.start": 5.0,
+            "world.mist_settings.depth": 25.0,
+            "world.mist_settings.falloff": "QUADRATIC",
+            "<ACTIVE_VIEW_LAYER>.use_pass_position": false,
+            "<ACTIVE_VIEW_LAYER>.use_pass_normal": false,
+            "<ACTIVE_VIEW_LAYER>.use_pass_vector": false,
+            "<ACTIVE_VIEW_LAYER>.use_pass_uv": false,
+            "<ACTIVE_VIEW_LAYER>.use_pass_grease_pencil": false,
+            "<ACTIVE_VIEW_LAYER>.cycles.denoising_store_passes": false,
+            "<ACTIVE_VIEW_LAYER>.use_pass_object_index": false,
+            "<ACTIVE_VIEW_LAYER>.use_pass_material_index": false,
+            "<ACTIVE_VIEW_LAYER>.cycles.pass_debug_sample_count": false,
+            "<ACTIVE_VIEW_LAYER>.cycles.pass_render_time": false,
+            "<ACTIVE_VIEW_LAYER>.pass_alpha_threshold": 0.5,
+            "<ACTIVE_VIEW_LAYER>.use_pass_diffuse_direct": false,
+            "<ACTIVE_VIEW_LAYER>.use_pass_diffuse_indirect": false,
+            "<ACTIVE_VIEW_LAYER>.use_pass_diffuse_color": false,
+            "<ACTIVE_VIEW_LAYER>.use_pass_glossy_direct": false,
+            "<ACTIVE_VIEW_LAYER>.use_pass_glossy_indirect": false,
+            "<ACTIVE_VIEW_LAYER>.use_pass_glossy_color": false,
+            "<ACTIVE_VIEW_LAYER>.use_pass_transmission_direct": false,
+            "<ACTIVE_VIEW_LAYER>.use_pass_transmission_indirect": false,
+            "<ACTIVE_VIEW_LAYER>.use_pass_transmission_color": false,
+            "<ACTIVE_VIEW_LAYER>.cycles.use_pass_volume_direct": false,
+            "<ACTIVE_VIEW_LAYER>.cycles.use_pass_volume_indirect": false,
+            "<ACTIVE_VIEW_LAYER>.eevee.use_pass_volume_direct": false,
+            "<ACTIVE_VIEW_LAYER>.cycles.use_pass_volume_scatter": false,
+            "<ACTIVE_VIEW_LAYER>.cycles.use_pass_volume_transmit": false,
+            "<ACTIVE_VIEW_LAYER>.cycles.use_pass_volume_majorant": false,
+            "<ACTIVE_VIEW_LAYER>.use_pass_emit": false,
+            "<ACTIVE_VIEW_LAYER>.use_pass_environment": false,
+            "<ACTIVE_VIEW_LAYER>.use_pass_ambient_occlusion": false,
+            "<ACTIVE_VIEW_LAYER>.cycles.use_pass_shadow_catcher": false,
+            "<ACTIVE_VIEW_LAYER>.eevee.use_pass_transparent": false,
+            "<ACTIVE_VIEW_LAYER>.use_pass_cryptomatte_object": false,
+            "<ACTIVE_VIEW_LAYER>.use_pass_cryptomatte_material": false,
+            "<ACTIVE_VIEW_LAYER>.use_pass_cryptomatte_asset": false,
+            "<ACTIVE_VIEW_LAYER>.pass_cryptomatte_depth": 6,
+            "<ACTIVE_VIEW_LAYER>.use_sky": true,
+            "<ACTIVE_VIEW_LAYER>.use_solid": true,
+            "<ACTIVE_VIEW_LAYER>.use_strand": true,
+            "<ACTIVE_VIEW_LAYER>.use_volumes": true,
+            "<ACTIVE_VIEW_LAYER>.use_motion_blur": true,
+            "eevee.gtao_distance": 0.20000000298023224
+        },
+        "BLENDER_SCENE": {
+            "unit_settings.system": "METRIC",
+            "unit_settings.scale_length": 1.0,
+            "unit_settings.use_separate": false,
+            "unit_settings.system_rotation": "DEGREES",
+            "unit_settings.length_unit": "METERS",
+            "unit_settings.mass_unit": "KILOGRAMS",
+            "unit_settings.time_unit": "SECONDS",
+            "unit_settings.temperature_unit": "KELVIN",
+            "use_gravity": true,
+            "gravity": [
+                0.0,
+                0.0,
+                -9.8100004196167
+            ]
+        }
+    }
+}

@@ -1,0 +1,16 @@
+{
+    "USER_CUSTOM": [
+        {
+            "data_path": "bpy.context.scene.eevee.gi_cubemap_resolution",
+            "friendly_name": "Custom: Light Probe resolution"
+        },
+        {
+            "data_path": "aaa",
+            "friendly_name": "AA"
+        },
+        {
+            "data_path": "BB",
+            "friendly_name": "BB"
+        }
+    ]
+}

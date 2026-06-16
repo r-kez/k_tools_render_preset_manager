@@ -1,0 +1,24 @@
+schema_version = "1.0.0"
+
+
+id = "k_tools_render_preset_manager"
+version = "1.3.0"
+name = "K-Tools: Render Preset Manager"
+tagline = "Save and Load Blender's Settings"
+maintainer = "Robert Kezives <kezives3D@gmail.com>"
+
+type = "add-on"
+
+website = "https://kezives.gumroad.com/l/k_tools_render_preset_manager"
+
+tags = ["Render"]
+
+blender_version_min = "4.2.0"
+
+
+license = [
+  "SPDX:GPL-3.0-or-later",
+]
+
+[permissions]
+files = "Import/export .JSON text files from/to disk"
