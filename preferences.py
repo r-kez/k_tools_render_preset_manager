@@ -5,6 +5,7 @@ from .properties.properties import BlacklistableProperty
 from .properties import function_list
 from . import utils
 from .ui_custom_props import KTOOLS_CustomPropItem
+from .panel_scraper import scrape_category_panels
 
 #########################################################
 # UI LIST FOR BLACKLIST
@@ -52,7 +53,6 @@ class RENDER_PRESET_UL_blacklist(bpy.types.UIList):
                 "OCTANE_POST",
                 "BLENDER_OUTPUT",
                 "USER_CUSTOM",
-                #function_list.OCTANE_OUTPUT_PROPS
             ]
         }
         
@@ -117,6 +117,21 @@ class KToolsRenderPresetManagerPreferences(AddonPreferences):
         name="Show Whitelist",
         description="",
         default=False
+    ) # type: ignore
+
+    pref_category_tab: bpy.props.EnumProperty(
+        name="Category",
+        description="Select category to view panel-based property hierarchy",
+        items=[
+            ('CYCLES', "Cycles", "Cycles Render Engine Panels"),
+            ('BLENDER_EEVEE', "EEVEE", "EEVEE Render Engine Panels"),
+            ('BLENDER_WORKBENCH', "Workbench", "Workbench Render Engine Panels"),
+            ('BLENDER_OUTPUT', "Output", "Output Settings Panels"),
+            ('BLENDER_VIEW_LAYER', "View Layer", "View Layer Panels"),
+            ('BLENDER_SCENE', "Scene", "Scene Settings Panels"),
+            ('OCTANE', "Octane", "Octane Render Engine Panels"),
+        ],
+        default='CYCLES'
     ) # type: ignore
 
     show_custom_list: bpy.props.BoolProperty(
@@ -210,48 +225,74 @@ class KToolsRenderPresetManagerPreferences(AddonPreferences):
         col.prop(self, "panel_location")
         col.prop(self, "preset_display_style")
         
-        # ========== SEÇÃO: PROPERTY WHITELIST ==========
+        # ========== SEÇÃO: PANEL-BASED PROPERTY MANAGEMENT ==========
         box = layout.box()
         row = box.row(align=True)
         row.alignment = 'LEFT'
         ICON = 'TRIA_DOWN' if self.show_whitelist else 'TRIA_RIGHT'
         row.label(text="", icon='FILTER')
-        row.prop(self, 'show_whitelist', text="Whitelist", icon=ICON, emboss=False)
+        row.prop(self, 'show_whitelist', text="Panel Property Management (v2.0 Scraper)", icon=ICON, emboss=False)
 
         if self.show_whitelist:
-            if utils.is_engine_available(context, 'octane'):
-                row = box.row(align=True)
-                #row.label(text='Engine:', icon='PREFERENCES')
-                row.prop(blacklist_props, 'engine_blacklist_tab', expand=True)
-                row.scale_x = 1.5
-                row.operator("render_preset.sync_blacklist", icon='FILE_REFRESH', text='')
-
-            # Campo de busca
+            # Category Tabs
             row = box.row(align=True)
-            #row.label(text="Filter:")
+            row.prop(self, "pref_category_tab", expand=True)
+
+            # Property Search
+            row = box.row(align=True)
             row.prop(self, "search_term", text="", icon='VIEWZOOM')
-            
             if self.search_term:
                 op = row.operator("wm.context_set_string", text="", icon='X')
-                op.data_path = "preferences.addons['bl_ext.vscode_development.k_tools_render_preset_manager'].preferences.search_term"
+                op.data_path = f"preferences.addons['{__package__}'].preferences.search_term"
                 op.value = ""
+
+            # Dynamic Panel Hierarchy Drawing
+            selected_cat = self.pref_category_tab
+            scraped_panels = scrape_category_panels(selected_cat, context)
             
-            # Lista de propriedades
-            box.template_list(
-                "RENDER_PRESET_UL_blacklist",
-                "",
-                self,
-                "blacklist_items",
-                self,
-                "blacklist_active_index",
-                rows=10
-            )
+            # Map blacklist items by path for quick lookup
+            bl_item_map = {item.path: item for item in self.blacklist_items}
+            search_query = self.search_term.lower()
+
+            if not scraped_panels:
+                box.label(text=f"No panels found for {selected_cat}", icon='INFO')
+            else:
+                for panel in scraped_panels:
+                    p_label = panel["label"]
+                    p_props = panel["properties"]
+
+                    # Filter properties by search query if set
+                    if search_query:
+                        p_props = [
+                            prop for prop in p_props
+                            if search_query in prop[0].lower() or search_query in prop[1].lower() or search_query in prop[2].lower()
+                        ]
+                        if not p_props:
+                            continue
+
+                    panel_box = box.box()
+                    panel_box.label(text=f"{p_label} ({len(p_props)} properties)", icon='PANEL_CLOSE')
+
+                    col = panel_box.column(align=True)
+                    for prop_path, short_name, full_label in p_props:
+                        row = col.row(align=True)
+                        bl_item = bl_item_map.get(prop_path)
+                        if bl_item:
+                            row.prop(bl_item, "is_enabled", text="")
+                        else:
+                            row.label(text="", icon='CHECKBOX_HLT')
+
+                        row.label(text=short_name)
+                        sub_label = row.row()
+                        sub_label.active = False
+                        sub_label.alignment = 'RIGHT'
+                        sub_label.label(text=prop_path)
 
             # Info helper
             row = box.row()
             row.scale_y = 0.8
             row.alignment = 'RIGHT'
-            row.label(text="Items marked as True will be loaded by default", icon='INFO')
+            row.label(text="Checked properties are included in presets by default", icon='INFO')
         
         # User Custom List and Ops
         box = layout.box()

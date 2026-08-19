@@ -28,8 +28,64 @@ from bpy_extras.io_utils import ImportHelper
 from ..utils import get_all_render_settings
 from .. import utils
 from ..utils import PresetChangeItem
+from ..panel_scraper import scrape_category_panels
 
 RENDER_SETTINGS = get_all_render_settings()
+
+def ensure_preset_v2_compatibility(preset_data, context=None):
+    """
+    Ensures that a loaded preset dictionary contains the v2.0 'categories' (panel-structured) data.
+    If loading a legacy v1.0 preset, it dynamically maps the flat 'render_presets' data into panels.
+    """
+    if "categories" in preset_data and preset_data["categories"]:
+        return preset_data
+
+    render_presets = preset_data.get("render_presets", {})
+    categories_data = {}
+
+    for category_name, settings in render_presets.items():
+        if not settings:
+            continue
+
+        scraped_panels = scrape_category_panels(category_name, context)
+        category_panels_data = {}
+
+        for p_info in scraped_panels:
+            p_id = p_info["id"]
+            p_label = p_info["label"]
+            p_props = {}
+
+            for prop_path, short_name, full_label in p_info["properties"]:
+                if prop_path in settings:
+                    p_props[prop_path] = settings[prop_path]
+
+            if p_props:
+                category_panels_data[p_id] = {
+                    "label": p_label,
+                    "parent_id": p_info["parent_id"],
+                    "properties": p_props
+                }
+
+        mapped_paths = {p for p_data in category_panels_data.values() for p in p_data["properties"].keys()}
+        unmapped_props = {path: val for path, val in settings.items() if path not in mapped_paths}
+
+        if unmapped_props:
+            general_p_id = f"DYNAMIC_PT_{category_name.lower()}_general"
+            if general_p_id in category_panels_data:
+                category_panels_data[general_p_id]["properties"].update(unmapped_props)
+            else:
+                category_panels_data[general_p_id] = {
+                    "label": "General",
+                    "parent_id": "",
+                    "properties": unmapped_props
+                }
+
+        categories_data[category_name] = {
+            "panels": category_panels_data
+        }
+
+    preset_data["categories"] = categories_data
+    return preset_data
 
 # =============================================================================
 # Helper Functions
@@ -194,9 +250,11 @@ class RENDER_PRESET_OT_load(Operator, ImportHelper):
             with open(self.filepath, "r") as f:
                 preset_data = json.load(f)
 
+            # Ensure v2.0 compatibility (converts legacy v1.0 presets dynamically if needed)
+            preset_data = ensure_preset_v2_compatibility(preset_data, context)
+
             # Basic structure validation
-            required_keys = ("preset_name", "render_presets")
-            if not all(key in preset_data for key in required_keys):
+            if "preset_name" not in preset_data or ("render_presets" not in preset_data and "categories" not in preset_data):
                 self.report({"ERROR"}, "Invalid preset file format.")
                 return {"CANCELLED"}
 
@@ -386,9 +444,7 @@ class RENDER_PRESET_OT_load_preview(bpy.types.Operator):
             mod_box = layout.box()
             mod_box.label(text="Modules to Load:", icon="CHECKMARK")
 
-            # Render toggles in pairs for a compact 2-column layout
-            col = mod_box.column(align=True)
-            # Track which props have already been drawn (VIEW_LAYER aliases)
+            grid = mod_box.grid_flow(columns=3, align=True, even_columns=True)
             _drawn_props = set()
 
             for cat in available_categories:
@@ -398,8 +454,7 @@ class RENDER_PRESET_OT_load_preview(bpy.types.Operator):
                 _drawn_props.add(prop_name)
 
                 label, icon = _MODULE_LABELS.get(cat, (cat.replace("_", " ").title(), "DOT"))
-                row = col.row(align=True)
-                row.prop(self, prop_name, text=label, icon=icon)
+                grid.prop(self, prop_name, text=label, icon=icon, toggle=True)
 
         layout.separator()
 
@@ -591,12 +646,39 @@ class RENDER_PRESET_OT_load_preview(bpy.types.Operator):
         has_failures = bool(failed_to_apply)
         has_skips    = bool(skipped_on_blacklist)
 
+        print("\n--- Render Preset Manager: Load Report ---")
+        if applied_count > 0:
+            print(f"  Successfully applied {applied_count} settings.")
+        if reapplied_count > 0:
+            print(f"  -> Verification pass auto-corrected {reapplied_count} properties.")
+        if has_skips:
+            print(f"\n  {len(skipped_on_blacklist)} properties SKIPPED (blacklisted):")
+            for name in skipped_on_blacklist:
+                print(f"    - '{name}'")
+        if has_failures:
+            print(f"\n  {len(failed_to_apply)} properties FAILED:")
+            for name, error in failed_to_apply:
+                print(f"    - '{name}': {error or 'Unknown error'}")
+        print("------------------------------------------")
+
         if not has_failures and not has_skips:
             msg = f"Successfully applied {applied_count} settings."
             if reapplied_count > 0:
                 msg += f" (Auto-corrected {reapplied_count} properties.)"
             self.report({"INFO"}, msg)
         else:
+            report_data = {
+                "preset_name": preset_data.get("preset_name", "Unknown"),
+                "applied_count": applied_count,
+                "reapplied_count": reapplied_count,
+                "failed": failed_to_apply,
+                "skipped": skipped_on_blacklist
+            }
+            try:
+                bpy.ops.render_preset.load_report("INVOKE_DEFAULT", report_data_json=json.dumps(report_data))
+            except Exception as e:
+                print(f"K-Tools: Failed to open report popup – {e}")
+
             parts = []
             if applied_count > 0:
                 parts.append(f"Applied {applied_count} settings")
@@ -605,22 +687,7 @@ class RENDER_PRESET_OT_load_preview(bpy.types.Operator):
             if has_skips:
                 parts.append(f"{len(skipped_on_blacklist)} skipped (blacklist)")
 
-            self.report({"WARNING"}, f"{', '.join(parts)}. Check System Console.")
-
-            print("\n--- Render Preset Manager: Load Report ---")
-            if applied_count > 0:
-                print(f"  Successfully applied {applied_count} settings.")
-            if reapplied_count > 0:
-                print(f"  -> Verification pass auto-corrected {reapplied_count} properties.")
-            if has_skips:
-                print(f"\n  {len(skipped_on_blacklist)} properties SKIPPED (blacklisted):")
-                for name in skipped_on_blacklist:
-                    print(f"    - '{name}'")
-            if has_failures:
-                print(f"\n  {len(failed_to_apply)} properties FAILED:")
-                for name, error in failed_to_apply:
-                    print(f"    - '{name}': {error or 'Unknown error'}")
-            print("------------------------------------------")
+            self.report({"WARNING"}, f"{', '.join(parts)}.")
 
         return {"FINISHED"}
 
@@ -780,13 +847,152 @@ class RENDER_PRESET_OT_load_from_active_index(bpy.types.Operator):
 
 
 # =============================================================================
+# PropertyGroup: Report Item for Popup UI
+# =============================================================================
+
+class RENDER_PRESET_ReportItem(bpy.types.PropertyGroup):
+    name: bpy.props.StringProperty()  # type: ignore
+    message: bpy.props.StringProperty()  # type: ignore
+    is_expanded: bpy.props.BoolProperty(default=False)  # type: ignore
+
+
+# =============================================================================
+# Operator: Load Report Popup
+# =============================================================================
+
+class RENDER_PRESET_OT_load_report(bpy.types.Operator):
+    """Shows a dialog summary of successful, failed, and blacklisted settings."""
+
+    bl_idname = "render_preset.load_report"
+    bl_label  = "Render Preset Load Summary"
+    bl_options = {'INTERNAL'}
+
+    report_data_json: StringProperty(options={'HIDDEN'})  # type: ignore
+    failed_items: bpy.props.CollectionProperty(type=RENDER_PRESET_ReportItem)  # type: ignore
+
+    _mouse_moved = False
+
+    def execute(self, context):
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        # Save original cursor position
+        self.original_x = event.mouse_x
+        self.original_y = event.mouse_y
+
+        # Warp cursor to center of the window context
+        win = context.window
+        win.cursor_warp(win.width // 2, win.height // 2)
+        self._mouse_moved = False
+
+        # Populate failed_items collection
+        self.failed_items.clear()
+        try:
+            data = json.loads(self.report_data_json)
+            failed = data.get("failed", [])
+            for name, err in failed:
+                item = self.failed_items.add()
+                item.name = name
+                friendly_err = err
+                if "not found" in err:
+                    friendly_err = f"{err} (Likely Deprecated)"
+                elif "is not defined" in err:
+                    friendly_err = f"{err} (Likely Deprecated)"
+                item.message = friendly_err
+        except Exception as e:
+            print(f"K-Tools: Failed to parse report data in invoke – {e}")
+
+        return context.window_manager.invoke_props_dialog(self, width=500)
+
+    def draw(self, context):
+        # Restore cursor to original position on the first draw call
+        if not hasattr(self, '_mouse_moved') or not self._mouse_moved:
+            try:
+                context.window.cursor_warp(self.original_x, self.original_y)
+            except Exception:
+                pass
+            self._mouse_moved = True
+
+        layout = self.layout
+        try:
+            data = json.loads(self.report_data_json)
+        except Exception:
+            layout.label(text="Error loading report data.")
+            return
+
+        preset_name = data.get("preset_name", "Unknown")
+        applied_count = data.get("applied_count", 0)
+        reapplied_count = data.get("reapplied_count", 0)
+        skipped = data.get("skipped", [])
+
+        # Header box
+        box = layout.box()
+        box.label(text=f"Preset: {preset_name}", icon="FILE")
+        row = box.row()
+        row.label(text=f"Successfully Applied: {applied_count}", icon="CHECKMARK")
+        if reapplied_count > 0:
+            row.label(text=f"(Auto-corrected: {reapplied_count})", icon="INFO")
+
+        # Failed (Probably Deprecated/Unsupported) Items Box
+        if self.failed_items:
+            layout.separator()
+            fail_box = layout.box()
+            fail_box.label(text=f"Probably Deprecated or Unsupported ({len(self.failed_items)}):", icon="QUESTION")
+            col = fail_box.column(align=True)
+
+            for item in self.failed_items:
+                row = col.row(align=True)
+                
+                # Expand/Collapse arrow toggle
+                icon = "TRIA_DOWN" if item.is_expanded else "TRIA_RIGHT"
+                row.prop(item, "is_expanded", text="", icon=icon, icon_only=True, emboss=False)
+                
+                # Property name label
+                row.label(text=item.name, icon="DOT")
+                
+                if not item.is_expanded:
+                    # Show truncated message on the side when collapsed
+                    row.label(text=item.message, icon="INFO")
+                else:
+                    # Indicate it's expanded
+                    row.label(text="click arrow to collapse")
+                
+                # When expanded, draw the full error message in a box below the property name
+                if item.is_expanded:
+                    nested_box = col.box()
+                    import textwrap
+                    # Wrap at 65 characters to ensure it fits perfectly in the 500px width
+                    wrapped_lines = textwrap.wrap(item.message, width=65)
+                    for i, line in enumerate(wrapped_lines):
+                        if i == 0:
+                            nested_box.label(text=line, icon="INFO")
+                        else:
+                            nested_box.label(text="      " + line)
+
+        # Skipped Items Box
+        if skipped:
+            layout.separator()
+            skip_box = layout.box()
+            skip_box.label(text=f"Skipped on Blacklist ({len(skipped)}):", icon="WARNING")
+            col = skip_box.column(align=True)
+            for name in skipped:
+                col.label(text=name, icon="DOT")
+
+        # Friendly close reminder at the bottom of the dialog
+        layout.separator()
+        layout.label(text="Preset applied. Press OK or Cancel to close this summary.", icon="INFO")
+
+
+# =============================================================================
 # Registration
 # =============================================================================
 
 classes = (
+    RENDER_PRESET_ReportItem,
     RENDER_PRESET_OT_load,
     RENDER_PRESET_OT_load_preview,
     RENDER_PRESET_OT_load_confirm,
     RENDER_PRESET_OT_load_from_path,
     RENDER_PRESET_OT_load_from_active_index,
+    RENDER_PRESET_OT_load_report,
 )

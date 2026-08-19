@@ -26,7 +26,9 @@ def get_addon_version():
             
     return "Unknown"
 
-SCHEMA_VERSION = "1.0.0"
+from ..panel_scraper import scrape_category_panels
+
+SCHEMA_VERSION = "2.0.0"
 ADDON_VERSION = get_addon_version()
 
 # =============================================================================
@@ -35,15 +37,13 @@ ADDON_VERSION = get_addon_version()
 def save_preset_to_file(context, filepath):
     """
     Gathers the selected settings and writes them to a JSON file at the given path.
-    This is the core saving logic used by multiple operators.
-    Returns True on success, False on failure.
+    Saves both v2.0 panel-structured data ('categories') and v1.0 flat data ('render_presets')
+    for maximum backwards and cross-version compatibility.
     """
     preset_props = context.scene.render_preset_settings
 
     # Check if a preset name is provided
     if not preset_props.preset_name:
-        # We use the operator's report function, which needs to be passed in
-        # For simplicity here, we'll just print. The operator will handle the report.
         print("Preset Name cannot be empty.")
         return False, "Preset Name cannot be empty."
 
@@ -53,7 +53,8 @@ def save_preset_to_file(context, filepath):
         "blender_version": bpy.app.version_string,
         "addon_version": ADDON_VERSION,
         "schema_version": SCHEMA_VERSION,
-        "render_presets": {}
+        "categories": {},
+        "render_presets": {}  # Fallback for v1.0 readers
     }
 
     total_saved = 0
@@ -76,15 +77,37 @@ def save_preset_to_file(context, filepath):
 
     for category, should_save in categories_to_save.items():
         if should_save:
-            print(f"Tentando salvar categoria: {category}") # <-- Debug
             settings = get_current_settings(category, context)
-            print(f"Encontrados {len(settings)} itens para {category}") # <-- Debug
             if settings:
+                # Flat save for legacy compatibility
                 preset_data["render_presets"][category] = settings
                 total_saved += len(settings)
+                
+                # Panel-structured save for v2.0
+                scraped_panels = scrape_category_panels(category, context)
+                category_panels_data = {}
+                
+                for p_info in scraped_panels:
+                    p_id = p_info["id"]
+                    p_label = p_info["label"]
+                    p_props = {}
+                    
+                    for prop_path, short_name, full_label in p_info["properties"]:
+                        if prop_path in settings:
+                            p_props[prop_path] = settings[prop_path]
+                            
+                    if p_props:
+                        category_panels_data[p_id] = {
+                            "label": p_label,
+                            "parent_id": p_info["parent_id"],
+                            "properties": p_props
+                        }
+                        
+                preset_data["categories"][category] = {
+                    "panels": category_panels_data
+                }
 
     if not preset_data["render_presets"]:
-        # Let the calling operator handle the report
         return False, "No categories selected to save."
 
     try:

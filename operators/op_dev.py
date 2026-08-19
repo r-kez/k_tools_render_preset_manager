@@ -355,43 +355,9 @@ class RENDER_PRESET_OT_fuzz_test_scene(bpy.types.Operator):
             return None
 
         # --- STANDARD RNA RESOLUTION ---
-        prop_path = path
-        if path.startswith("bpy.data.") or path.startswith("bpy.context."):
-            last_dot = path.rfind('.')
-            if last_dot == -1: return None
-            parent_path = path[:last_dot] 
-            last_attr = path[last_dot+1:]  
-            try:
-                current_obj = eval(parent_path)
-            except Exception:
-                return None
-        else:
-            if path.startswith("<ACTIVE_VIEW_LAYER>"):
-                base_obj = bpy.context.view_layer
-                prop_path = path.replace("<ACTIVE_VIEW_LAYER>.", "")
-            # ENSINANDO O FUZZER A ACHAR A CÂMERA DO OCTANE
-            elif path.startswith("oct_view_cam."):
-                if not getattr(scene, "camera", None) or not scene.camera.data:
-                    return None
-                base_obj = scene.camera.data
-                prop_path = path.replace("oct_view_cam.", "")
-            elif path.startswith("bpy."):
-                base_obj = bpy
-                prop_path = path[4:] 
-            else:
-                base_obj = scene
-                
-            attrs = prop_path.split('.')
-            current_obj = base_obj
-            try:
-                for attr in attrs[:-1]:
-                    if hasattr(current_obj, attr):
-                        current_obj = getattr(current_obj, attr)
-                    else:
-                        return None
-                last_attr = attrs[-1]
-            except Exception:
-                return None
+        current_obj, last_type, last_attr = utils.resolve_path_to_target(scene, path)
+        if current_obj is None or last_type != 'attr':
+            return None
                 
         # --- RNA INTROSPECTION ---
         if not hasattr(current_obj, "bl_rna"): return None

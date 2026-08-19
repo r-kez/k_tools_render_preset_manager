@@ -24,6 +24,29 @@ from .properties.function_list import (
 
 
 # =============================================================================
+# OCIO / Property Name Translation
+# =============================================================================
+
+# Maps engine-specific color-space names to their Blender-native equivalents.
+OCIO_TRANSLATION_MAP = {
+    # Color spaces
+    "Linear": "Linear Rec.709",
+    "scene_linear": "scene_linear",
+    "Linear ACEScg": "ACEScg",
+    "Linear ACES": "ACES2065-1",
+    "Raw": "Non-Color",
+    # Looks (Filmic -> AgX)
+    "Very High Contrast": "AgX - Very High Contrast",
+    "High Contrast": "AgX - High Contrast",
+    "Medium High Contrast": "AgX - Medium High Contrast",
+    "Medium Contrast": "AgX - Base Contrast",
+    "Medium Low Contrast": "AgX - Medium Low Contrast",
+    "Low Contrast": "AgX - Low Contrast",
+    "Very Low Contrast": "AgX - Very Low Contrast",
+}
+
+
+# =============================================================================
 # Addon Globals
 # =============================================================================
 
@@ -170,38 +193,98 @@ def draw_comparison_layout(layout, operator, changes_collection, show_checkboxes
 # =============================================================================
 # Nested Attribute Access
 # =============================================================================
+def parse_path_to_steps(path):
+    """
+    Parses a path like "render.views['left'].use" or "bpy.data.colorspace.working_space"
+    into a list of steps. Each step is either ('attr', name) or ('index', key).
+    """
+    steps = []
+    i = 0
+    n = len(path)
+    while i < n:
+        if path[i] == '.':
+            i += 1
+            continue
+        elif path[i] == '[':
+            i += 1
+            start = i
+            while i < n and path[i] != ']':
+                i += 1
+            content = path[start:i]
+            i += 1 # skip ']'
+            if (content.startswith("'") and content.endswith("'")) or (content.startswith('"') and content.endswith('"')):
+                content = content[1:-1]
+            else:
+                try:
+                    content = int(content)
+                except ValueError:
+                    pass
+            steps.append(('index', content))
+        else:
+            start = i
+            while i < n and path[i] not in ('.', '['):
+                i += 1
+            steps.append(('attr', path[start:i]))
+    return steps
+
+
+def resolve_path_to_target(base_obj, path):
+    """
+    Resolves a path to its parent object and the last step.
+    Returns (parent_obj, last_step_type, last_step_val).
+    """
+    if path.startswith("bpy."):
+        steps = parse_path_to_steps(path)
+        if steps and steps[0] == ('attr', 'bpy'):
+            steps = steps[1:]
+        current_obj = bpy
+    elif path.startswith("<ACTIVE_VIEW_LAYER>"):
+        current_obj = bpy.context.view_layer
+        steps = parse_path_to_steps(path[len("<ACTIVE_VIEW_LAYER>"):])
+    elif path.startswith("world."):
+        current_obj = bpy.context.scene.world
+        steps = parse_path_to_steps(path[len("world."):])
+    elif path.startswith("oct_view_cam."):
+        scene = bpy.context.scene
+        if not getattr(scene, "camera", None) or not scene.camera.data:
+            return None, None, None
+        current_obj = scene.camera.data
+        steps = parse_path_to_steps(path[len("oct_view_cam."):])
+    else:
+        current_obj = base_obj
+        steps = parse_path_to_steps(path)
+
+    if not steps:
+        return None, None, None
+
+    for step_type, step_val in steps[:-1]:
+        try:
+            if step_type == 'attr':
+                current_obj = getattr(current_obj, step_val)
+            elif step_type == 'index':
+                if hasattr(current_obj, "get") and callable(current_obj.get):
+                    current_obj = current_obj.get(step_val)
+                else:
+                    current_obj = current_obj[step_val]
+        except Exception:
+            return None, None, None
+
+    last_type, last_val = steps[-1]
+    return current_obj, last_type, last_val
+
+
 def _resolve_path(scene, path):
     """
     Descobre quem é o objeto pai e qual é o nome do atributo final.
     Suporta caminhos relativos à cena (ex: 'render.resolution_x') 
     e caminhos absolutos (ex: 'bpy.context.preferences...').
     """
-    # Se for um caminho absoluto global do Blender
-    if path.startswith("bpy."):
-        last_dot = path.rfind('.')
-        if last_dot == -1: return None, None
-        
-        parent_path = path[:last_dot]
-        attr_name = path[last_dot+1:]
-        
-        try:
-            # Transforma a string do caminho no objeto real do Blender na memória
-            parent_obj = eval(parent_path)
-            return parent_obj, attr_name
-        except Exception:
-            return None, None
+    parent_obj, last_type, last_val = resolve_path_to_target(scene, path)
+    if parent_obj is not None and last_type == 'attr':
+        return parent_obj, last_val
+    return None, None
 
-    # Se for o caminho padrão relativo à Scene
-    else:
-        attrs = path.split('.')
-        current_obj = scene
-        try:
-            for attr in attrs[:-1]:
-                current_obj = getattr(current_obj, attr)
-            return current_obj, attrs[-1]
-        except Exception:
-            return None, None
-        
+
 def get_nested_attr(obj, path):
     """
     Retrieves a nested attribute from a Blender object by dotted path string.
@@ -210,7 +293,7 @@ def get_nested_attr(obj, path):
         - ``KTOOLS_SPECIAL.octane_active_kernel``    reads the active Octane kernel type.
         - ``KTOOLS_SPECIAL.octane_kernel_input|X``   reads input X from the active kernel.
         - ``<ACTIVE_VIEW_LAYER>.some.prop``           resolves against the active view layer.
-        - ``bpy.data.*`` / ``bpy.context.*``          evaluated directly via ``eval()``.
+        - ``bpy.data.*`` / ``bpy.context.*``          resolved safely without eval().
         - Standard dot-separated attribute paths.
 
     Returns None if the attribute cannot be resolved.
@@ -242,56 +325,28 @@ def get_nested_attr(obj, path):
             pass
         return None
 
-    # --- Active View Layer shorthand ---
-    if path.startswith("<ACTIVE_VIEW_LAYER>"):
-        obj  = bpy.context.view_layer
-        path = path.replace("<ACTIVE_VIEW_LAYER>.", "")
+    parent_obj, last_type, last_val = resolve_path_to_target(obj, path)
+    if parent_obj is None:
+        return None
 
-    # --- Direct bpy.data / bpy.context eval paths ---
-    if path.startswith("bpy.data.") or path.startswith("bpy.context."):
-        try:
-            value = eval(path)
-            if hasattr(value, "__len__") and not isinstance(value, (str, dict)):
-                return list(value)
-            return value
-        except Exception:
-            return None
-
-    # --- bpy.* shorthand (strips leading "bpy.") ---
-    if path.startswith("bpy."):
-        obj  = bpy
-        path = path[4:]
-
-    # --- Standard dotted attribute traversal ---
-    for attr in path.split("."):
-        if hasattr(obj, attr):
-            obj = getattr(obj, attr)
+    try:
+        if last_type == 'attr':
+            val = getattr(parent_obj, last_val)
         else:
-            return None
+            if hasattr(parent_obj, "get") and callable(parent_obj.get):
+                val = parent_obj.get(last_val)
+            else:
+                val = parent_obj[last_val]
 
-    if hasattr(obj, "__len__") and not isinstance(obj, (str, dict)):
-        try:
-            return list(obj)
-        except Exception:
-            pass
+        if hasattr(val, "__len__") and not isinstance(val, (str, dict)):
+            try:
+                return list(val)
+            except Exception:
+                pass
+        return val
+    except Exception:
+        return None
 
-    return obj
-
-
-# =============================================================================
-# OCIO / Property Name Translation
-# =============================================================================
-
-# Maps engine-specific color-space names to their Blender-native equivalents.
-# Populate this dict when a mismatch is detected between render engines.
-OCIO_TRANSLATION_MAP = {
-    # "Engine_Specific_Name": "Blender_Native_Name"
-}
-
-
-# =============================================================================
-# Nested Attribute Setter
-# =============================================================================
 
 def set_nested_attr(obj, path, value):
     """
@@ -369,107 +424,87 @@ def set_nested_attr(obj, path, value):
         except Exception as e:
             return False, f"Failed to set kernel input '{input_name}': {e}"
 
-    # --- Resolve the parent object and final attribute name ---
-    if path.startswith("bpy.data.") or path.startswith("bpy.context."):
-        last_dot    = path.rfind(".")
-        if last_dot == -1:
-            return False, "Invalid bpy path format"
-
-        parent_path = path[:last_dot]
-        last_attr   = path[last_dot + 1:]
-
-        try:
-            current_obj = eval(parent_path)
-        except Exception as e:
-            return False, f"Path evaluation failed: {e}"
-    else:
-        if path.startswith("<ACTIVE_VIEW_LAYER>"):
-            base_obj  = bpy.context.view_layer
-            prop_path = path.replace("<ACTIVE_VIEW_LAYER>.", "")
-        elif path.startswith("bpy."):
-            base_obj  = bpy
-            prop_path = path[4:]
-        else:
-            base_obj = obj
-
-        attrs       = prop_path.split(".")
-        current_obj = base_obj
-
-        try:
-            for attr in attrs[:-1]:
-                if hasattr(current_obj, attr):
-                    current_obj = getattr(current_obj, attr)
-                else:
-                    return False, f"Attribute '{attr}' not found in path: {prop_path}"
-            last_attr = attrs[-1]
-        except AttributeError as e:
-            return False, f"Attribute error in path '{prop_path}': {e}"
+    parent_obj, last_type, last_val = resolve_path_to_target(obj, path)
+    if parent_obj is None:
+        return False, f"Path resolution failed for: {path}"
 
     # --- Special case: working color space must use an operator ---
-    if prop_path == "data.colorspace.working_space":
+    if path == "bpy.data.colorspace.working_space" or prop_path == "data.colorspace.working_space":
         try:
             bpy.ops.wm.set_working_color_space(working_space=value)
             return True, None
         except Exception as e:
-            return False, f"Operator error on path '{prop_path}': {e}"
+            return False, f"Operator error on path '{path}': {e}"
 
     # --- Special case: curve mapping deserialization ---
-    if prop_path in CURVE_MAPPING_PATHS:
+    if path in CURVE_MAPPING_PATHS:
         target_curve = get_nested_attr(obj, path)
         if target_curve:
             deserialize_curve_mapping(target_curve, value)
             return True, None
-        return False, f"CurveMapping object not found for path: {prop_path}"
+        return False, f"CurveMapping object not found for path: {path}"
 
     # --- Standard RNA property assignment ---
     try:
-        if not hasattr(current_obj, last_attr):
-            return False, f"Property '{last_attr}' not found"
+        if last_type == 'attr':
+            if not hasattr(parent_obj, last_val):
+                return False, f"Property '{last_val}' not found"
 
-        rna_prop = current_obj.bl_rna.properties.get(last_attr)
+            rna_prop = None
+            if hasattr(parent_obj, "bl_rna"):
+                rna_prop = parent_obj.bl_rna.properties.get(last_val)
 
-        # Validate array type match
-        if rna_prop and hasattr(rna_prop, "is_array") and rna_prop.is_array:
-            if not isinstance(value, (list, tuple)):
-                return False, "Mismatched type for array property."
+            # Validate array type match
+            if rna_prop and hasattr(rna_prop, "is_array") and rna_prop.is_array:
+                if not isinstance(value, (list, tuple)):
+                    return False, "Mismatched type for array property."
 
-        # Skip read-only properties silently (not an error – e.g. computed props)
-        if rna_prop and rna_prop.is_readonly:
-            return True, None
+            # Skip read-only properties silently (not an error – e.g. computed props)
+            if rna_prop and rna_prop.is_readonly:
+                return True, None
 
-        # Fallback: OPEN_EXR_MULTILAYER → OPEN_EXR when unsupported
-        if last_attr == "file_format" and value == "OPEN_EXR_MULTILAYER":
-            if hasattr(rna_prop, "enum_items"):
-                valid_formats = [item.identifier for item in rna_prop.enum_items]
-                if "OPEN_EXR_MULTILAYER" not in valid_formats and "OPEN_EXR" in valid_formats:
-                    value = "OPEN_EXR"
+            # Fallback: OPEN_EXR_MULTILAYER → OPEN_EXR when unsupported
+            if last_val == "file_format" and value == "OPEN_EXR_MULTILAYER":
+                if rna_prop and hasattr(rna_prop, "enum_items"):
+                    valid_formats = [item.identifier for item in rna_prop.enum_items]
+                    if "OPEN_EXR_MULTILAYER" not in valid_formats and "OPEN_EXR" in valid_formats:
+                        value = "OPEN_EXR"
 
-        # Apply OCIO name translation for color-management string properties
-        if last_attr in ("name", "view_transform", "look") and isinstance(value, str):
-            value = OCIO_TRANSLATION_MAP.get(value, value)
+            # Apply OCIO name translation for color-management string properties
+            if last_val in ("name", "view_transform", "look") and isinstance(value, str):
+                value = OCIO_TRANSLATION_MAP.get(value, value)
 
-        setattr(current_obj, last_attr, value)
+            # Skip empty string for ENUM properties to avoid validation errors on legacy presets
+            if rna_prop and hasattr(rna_prop, "type") and rna_prop.type == 'ENUM' and value == "":
+                return True, None
+
+            setattr(parent_obj, last_val, value)
+        else:
+            try:
+                parent_obj[last_val] = value
+            except TypeError:
+                pass
 
         # Force a view-layer update for properties known to require it
-        if last_attr in ("color_management", "file_format", "engine"):
+        if last_type == 'attr' and last_val in ("color_management", "file_format", "engine"):
             bpy.context.view_layer.update()
 
         # Verify the assignment took effect; retry once with a forced update
-        if isinstance(value, str):
-            applied_value = getattr(current_obj, last_attr, None)
+        if last_type == 'attr' and isinstance(value, str):
+            applied_value = getattr(parent_obj, last_val, None)
             if applied_value != value:
                 bpy.context.view_layer.update()
                 try:
-                    setattr(current_obj, last_attr, value)
+                    setattr(parent_obj, last_val, value)
                 except Exception:
                     pass
 
         return True, None
 
     except TypeError as e:
-        return False, f"Type error setting '{prop_path}': {e}"
+        return False, f"Type error setting '{path}': {e}"
     except Exception as e:
-        return False, f"Unexpected error on path '{prop_path}': {e}"
+        return False, f"Unexpected error on path '{path}': {e}"
 
 
 # =============================================================================
