@@ -24,9 +24,9 @@ This tool is designed to streamline your workflow, allowing for quick, consisten
 - **Robust Data Support**: Correctly saves and loads complex data types, including Colors, Vectors, and custom Curves (`CurveMapping` objects for things like Motion Blur).  
 - **Automation Ready**: Includes silent operators (`render_preset.load_from_path`, `render_preset.undo_direct`) callable from scripts or addons for automated workflows (e.g., apply a preview preset, render, and revert).  
 
-### Experimental Output panel discovery
+### Experimental panel discovery
 
-In Addon Preferences > Developer Tools, **Experimental Output Panel Discovery** adds properties explicitly drawn by Blender's built-in Output panels to the existing preset list. The original list remains the fallback for settings hidden by the current UI state and for controls drawn inside Blender's UI templates. **Audit Output Panels** writes a report to Blender's Text Editor showing confirmed properties, unavailable states, and template calls that were not inspected. This option is off by default while panel discovery is being validated.
+In Addon Preferences > Developer Tools, **Experimental Panel Discovery** adds the properties Blender's own Properties Editor panels draw to the existing preset list, so a preset contains the settings you actually see in the UI. It can be enabled per category: **Output**, **Cycles**, **EEVEE**, **Workbench**, **View Layer** and **Scene**. Engine categories hold everything the Render tab shows for that engine (including shared panels such as Color Management and Simplify), and are read while that engine is active. The original list remains the fallback for settings hidden by the current UI state and for controls drawn inside Blender's UI templates. **Audit Panels** writes a per-category report to Blender's Text Editor showing confirmed properties, unavailable states, and template calls that were not inspected. These options are off by default while panel discovery is being validated. Octane panels are not covered yet.
 
 ---
 

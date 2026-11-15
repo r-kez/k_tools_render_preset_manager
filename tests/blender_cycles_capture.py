@@ -24,11 +24,18 @@ scene.render.engine = 'CYCLES'
 before = utils.get_current_settings('CYCLES', bpy.context)
 capture = output_panel_capture.capture_panels(bpy.context, 'CYCLES')
 assert utils.get_current_settings('CYCLES', bpy.context) == before, 'Capture changed the scene'
-assert not capture['errors'], capture['errors']
+# Blender 4.x's Display panel needs a GPU, which background mode does not have.
+errors = [e for e in capture['errors'] if 'not available in background mode' not in e]
+assert not errors, errors
 
 by_id = {panel['id']: {path for path, _ in panel['properties']}
          for panel in capture['panels']}
-assert all(panel_id.startswith('CYCLES_RENDER_PT_') for panel_id in by_id), by_id.keys()
+# Cycles' own Render panels plus the shared Render tab panels Blender shows for it,
+# but never camera panels or children of panels hidden for Cycles.
+assert not any(panel_id.startswith('CYCLES_CAMERA_PT_') for panel_id in by_id), by_id.keys()
+assert 'RENDER_PT_color_management' in by_id
+assert 'RENDER_PT_simplify_viewport' not in by_id, 'Child of hidden RENDER_PT_simplify captured'
+assert 'cycles.device' in {path for paths in by_id.values() for path in paths}
 assert 'cycles.samples' in by_id['CYCLES_RENDER_PT_sampling_render']
 assert 'cycles.preview_samples' in by_id['CYCLES_RENDER_PT_sampling_viewport']
 assert 'cycles.max_bounces' in by_id['CYCLES_RENDER_PT_light_paths_max_bounces']

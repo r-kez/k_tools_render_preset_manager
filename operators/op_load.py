@@ -29,6 +29,7 @@ from ..utils import get_all_render_settings
 from .. import utils
 from ..utils import PresetChangeItem
 from ..panel_scraper import scrape_category_panels
+from ..properties.function_list import OBSOLETE_PATHS
 
 RENDER_SETTINGS = get_all_render_settings()
 
@@ -49,7 +50,18 @@ def ensure_preset_v2_compatibility(preset_data, context=None):
     """
     Ensures that a loaded preset dictionary contains the v2.0 'categories' (panel-structured) data.
     If loading a legacy v1.0 preset, it dynamically maps the flat 'render_presets' data into panels.
+    Obsolete paths saved by older versions are dropped so they are never applied.
     """
+    for settings in preset_data.get("render_presets", {}).values():
+        for path in OBSOLETE_PATHS.intersection(settings):
+            del settings[path]
+    for category_data in preset_data.get("categories", {}).values():
+        for panel in category_data.get("panels", {}).values():
+            for key in ("properties", "property_labels"):
+                values = panel.get(key, {})
+                for path in OBSOLETE_PATHS.intersection(values):
+                    del values[path]
+
     if "categories" in preset_data and preset_data["categories"]:
         if not preset_data.get("render_presets"):
             preset_data["render_presets"] = {
@@ -164,7 +176,7 @@ def compare_settings(current, preset):
     return {
         key: {"current": current.get(key), "preset": preset_value}
         for key, preset_value in preset.items()
-        if current.get(key) != preset_value
+        if key not in OBSOLETE_PATHS and current.get(key) != preset_value
     }
 
 

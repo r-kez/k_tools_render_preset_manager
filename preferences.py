@@ -171,9 +171,40 @@ class KToolsRenderPresetManagerPreferences(AddonPreferences):
     ) # type: ignore
 
     experimental_cycles_capture: bpy.props.BoolProperty(
-        name="Experimental Cycles Panel Discovery",
-        description=("Add properties drawn by Cycles' Render panels to the existing preset list. "
+        name="Cycles",
+        description=("Add properties drawn on the Render tab for Cycles to the existing preset list. "
                      "Panels are read while Cycles is the active render engine"),
+        default=False,
+        update=_update_output_capture,
+    ) # type: ignore
+
+    experimental_eevee_capture: bpy.props.BoolProperty(
+        name="EEVEE",
+        description=("Add properties drawn on the Render tab for EEVEE to the existing preset list. "
+                     "Panels are read while EEVEE is the active render engine"),
+        default=False,
+        update=_update_output_capture,
+    ) # type: ignore
+
+    experimental_workbench_capture: bpy.props.BoolProperty(
+        name="Workbench",
+        description=("Add properties drawn on the Render tab for Workbench to the existing preset list. "
+                     "Panels are read while Workbench is the active render engine"),
+        default=False,
+        update=_update_output_capture,
+    ) # type: ignore
+
+    experimental_view_layer_capture: bpy.props.BoolProperty(
+        name="View Layer",
+        description=("Add properties drawn on the View Layer tab, including the active engine's "
+                     "passes, to the existing preset list"),
+        default=False,
+        update=_update_output_capture,
+    ) # type: ignore
+
+    experimental_scene_capture: bpy.props.BoolProperty(
+        name="Scene",
+        description="Add properties drawn on the Scene tab to the existing preset list",
         default=False,
         update=_update_output_capture,
     ) # type: ignore
@@ -369,8 +400,13 @@ class KToolsRenderPresetManagerPreferences(AddonPreferences):
         if self.developer_extras:
             box.separator(factor=0.5)
 
-            box.prop(self, "experimental_output_capture")
-            box.prop(self, "experimental_cycles_capture")
+            box.label(text="Experimental Panel Discovery")
+            grid = box.grid_flow(columns=3, even_columns=True, align=True)
+            grid.prop(self, "experimental_output_capture", text="Output")
+            for attr in ("experimental_cycles_capture", "experimental_eevee_capture",
+                         "experimental_workbench_capture", "experimental_view_layer_capture",
+                         "experimental_scene_capture"):
+                grid.prop(self, attr)
 
             box.label(text="Property Auditor")
             
@@ -401,12 +437,8 @@ class KToolsRenderPresetManagerPreferences(AddonPreferences):
                         icon='FILE_REFRESH')
 
             row = box.row(align=True)
-            row.operator("render_preset.audit_output_panels",
-                         text="Audit Output Panels",
-                         icon='OUTPUT').category = 'BLENDER_OUTPUT'
-            row.operator("render_preset.audit_output_panels",
-                         text="Audit Cycles Panels",
-                         icon='SHADING_RENDERED').category = 'CYCLES'
+            row.operator_menu_enum("render_preset.audit_output_panels", "category",
+                                   text="Audit Panels", icon='VIEWZOOM')
             
             row.separator()
             row = box.row(align=True)

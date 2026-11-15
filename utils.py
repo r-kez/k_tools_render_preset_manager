@@ -74,6 +74,10 @@ def get_addon_preferences(context):
 PANEL_CAPTURE_PREFS = {
     'BLENDER_OUTPUT': 'experimental_output_capture',
     'CYCLES': 'experimental_cycles_capture',
+    'BLENDER_EEVEE': 'experimental_eevee_capture',
+    'BLENDER_WORKBENCH': 'experimental_workbench_capture',
+    'BLENDER_VIEW_LAYER': 'experimental_view_layer_capture',
+    'BLENDER_SCENE': 'experimental_scene_capture',
 }
 
 

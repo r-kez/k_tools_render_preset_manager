@@ -10,6 +10,10 @@ from ..output_panel_capture import capture_panels, capture_output_states
 _AUDIT_TEXT_NAMES = {
     'BLENDER_OUTPUT': "Render_Preset_Output_Panel_Audit",
     'CYCLES': "Render_Preset_Cycles_Panel_Audit",
+    'BLENDER_EEVEE': "Render_Preset_EEVEE_Panel_Audit",
+    'BLENDER_WORKBENCH': "Render_Preset_Workbench_Panel_Audit",
+    'BLENDER_VIEW_LAYER': "Render_Preset_View_Layer_Panel_Audit",
+    'BLENDER_SCENE': "Render_Preset_Scene_Panel_Audit",
 }
 
 
@@ -24,7 +28,11 @@ class RENDER_PRESET_OT_audit_output_panels(Operator):
         name="Category",
         items=[
             ('BLENDER_OUTPUT', "Output", "Blender's Output panels"),
-            ('CYCLES', "Cycles", "Cycles' Render panels"),
+            ('CYCLES', "Cycles", "Render tab panels drawn for Cycles"),
+            ('BLENDER_EEVEE', "EEVEE", "Render tab panels drawn for EEVEE"),
+            ('BLENDER_WORKBENCH', "Workbench", "Render tab panels drawn for Workbench"),
+            ('BLENDER_VIEW_LAYER', "View Layer", "View Layer tab panels"),
+            ('BLENDER_SCENE', "Scene", "Scene tab panels"),
         ],
         default='BLENDER_OUTPUT',
     ) # type: ignore
