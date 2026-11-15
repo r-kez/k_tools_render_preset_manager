@@ -193,34 +193,44 @@ def scrape_category_panels(category_key, context=None):
     if live_output:
         from .output_panel_capture import capture_panels
 
-        baseline_by_key = {
-            tuple(utils.parse_path_to_steps(path)): (path, label)
-            for path, label in baseline_props
-        }
+        def key_of(path):
+            return tuple(utils.parse_path_to_steps(path))
+
+        baseline_by_key = {key_of(path): (path, label) for path, label in baseline_props}
         placed = set()
+        live_panels = []
         captured = capture_panels(context or bpy.context, category_key)
+        # Panels Blender actually draws come first, in the order the UI shows them.
         for captured_panel in captured['panels']:
-            panel_id = captured_panel['id']
-            target = panel_dict.setdefault(panel_id, {
-                'id': panel_id,
-                'label': captured_panel['label'],
-                'parent_id': captured_panel['parent_id'],
-                'properties': [],
-            })
+            properties = []
             for captured_path, short_name in captured_panel['properties']:
-                key = tuple(utils.parse_path_to_steps(captured_path))
+                key = key_of(captured_path)
                 if key in placed:
                     continue
                 legacy_path, full_label = baseline_by_key.get(
                     key, (captured_path, f"{captured_panel['label']}: {short_name}"))
-                for panel in panel_dict.values():
-                    panel['properties'] = [
-                        item for item in panel['properties']
-                        if tuple(utils.parse_path_to_steps(item[0])) != key
-                    ]
-                target['properties'].append((legacy_path, short_name, full_label))
+                properties.append((legacy_path, short_name, full_label))
                 placed.add(key)
-        
+            if properties:
+                live_panels.append({
+                    'id': captured_panel['id'],
+                    'label': captured_panel['label'],
+                    'parent_id': captured_panel['parent_id'],
+                    'properties': properties,
+                })
+        # Legacy entries the current UI does not draw stay listed after them.
+        live_ids = {panel['id'] for panel in live_panels}
+        for panel in panel_dict.values():
+            panel['properties'] = [item for item in panel['properties']
+                                   if key_of(item[0]) not in placed]
+        for panel in live_panels:
+            if panel['id'] in panel_dict:
+                panel['properties'].extend(panel_dict[panel['id']]['properties'])
+        panel_dict = {
+            **{panel['id']: panel for panel in live_panels},
+            **{p_id: panel for p_id, panel in panel_dict.items() if p_id not in live_ids},
+        }
+
     # Filter out empty panels
     result_panels = [p for p in panel_dict.values() if p["properties"]]
     

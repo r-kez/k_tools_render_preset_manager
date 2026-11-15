@@ -275,6 +275,22 @@ def _panel_order(panel_class, module):
         return 1 << 30
 
 
+def _breadcrumb(panel_class):
+    """Label a sub-panel with its parents, e.g. 'Sampling > Viewport'.
+
+    Several panels share a name (Cycles has three 'Viewport' panels), so the
+    parent chain is what tells users which one a setting comes from.
+    """
+    labels = []
+    seen = set()
+    while panel_class is not None and panel_class not in seen:
+        seen.add(panel_class)
+        labels.append(getattr(panel_class, 'bl_label', '') or panel_class.__name__)
+        parent_id = getattr(panel_class, 'bl_parent_id', '')
+        panel_class = getattr(bpy.types, parent_id, None) if parent_id else None
+    return ' > '.join(reversed(labels))
+
+
 def _is_visible(panel_class, context, cache, errors):
     """A panel shows only when it and every parent panel pass their poll."""
     panel_id = getattr(panel_class, 'bl_idname', None) or panel_class.__name__
@@ -366,7 +382,7 @@ def capture_panels(context, category):
             if properties:
                 result['panels'].append({
                     'id': panel_id,
-                    'label': getattr(panel_class, 'bl_label', panel_id),
+                    'label': _breadcrumb(panel_class),
                     'parent_id': getattr(panel_class, 'bl_parent_id', ''),
                     'properties': properties,
                 })
