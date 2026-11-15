@@ -9,8 +9,9 @@ from .panel_scraper import scrape_category_panels, clear_scraper_cache
 
 
 def _update_output_capture(self, context):
+    # Any panel discovery toggle changes the property list, so resync it.
     clear_scraper_cache()
-    if self.experimental_output_capture and hasattr(bpy.ops.render_preset, 'sync_blacklist'):
+    if hasattr(bpy.ops.render_preset, 'sync_blacklist'):
         bpy.ops.render_preset.sync_blacklist()
 
 #########################################################
@@ -164,9 +165,9 @@ class KToolsRenderPresetManagerPreferences(AddonPreferences):
     ) # type: ignore
 
     experimental_output_capture: bpy.props.BoolProperty(
-        name="Experimental Output Panel Discovery",
-        description="Add properties drawn by Blender's Output panels to the existing preset list",
-        default=False,
+        name="Output",
+        description="Add properties drawn on the Output tab to the existing preset list",
+        default=True,
         update=_update_output_capture,
     ) # type: ignore
 
@@ -174,7 +175,7 @@ class KToolsRenderPresetManagerPreferences(AddonPreferences):
         name="Cycles",
         description=("Add properties drawn on the Render tab for Cycles to the existing preset list. "
                      "Panels are read while Cycles is the active render engine"),
-        default=False,
+        default=True,
         update=_update_output_capture,
     ) # type: ignore
 
@@ -182,7 +183,7 @@ class KToolsRenderPresetManagerPreferences(AddonPreferences):
         name="EEVEE",
         description=("Add properties drawn on the Render tab for EEVEE to the existing preset list. "
                      "Panels are read while EEVEE is the active render engine"),
-        default=False,
+        default=True,
         update=_update_output_capture,
     ) # type: ignore
 
@@ -190,7 +191,7 @@ class KToolsRenderPresetManagerPreferences(AddonPreferences):
         name="Workbench",
         description=("Add properties drawn on the Render tab for Workbench to the existing preset list. "
                      "Panels are read while Workbench is the active render engine"),
-        default=False,
+        default=True,
         update=_update_output_capture,
     ) # type: ignore
 
@@ -198,14 +199,14 @@ class KToolsRenderPresetManagerPreferences(AddonPreferences):
         name="View Layer",
         description=("Add properties drawn on the View Layer tab, including the active engine's "
                      "passes, to the existing preset list"),
-        default=False,
+        default=True,
         update=_update_output_capture,
     ) # type: ignore
 
     experimental_scene_capture: bpy.props.BoolProperty(
         name="Scene",
         description="Add properties drawn on the Scene tab to the existing preset list",
-        default=False,
+        default=True,
         update=_update_output_capture,
     ) # type: ignore
 
@@ -400,10 +401,10 @@ class KToolsRenderPresetManagerPreferences(AddonPreferences):
         if self.developer_extras:
             box.separator(factor=0.5)
 
-            box.label(text="Experimental Panel Discovery")
+            box.label(text="Panel Discovery (read settings from Blender's panels)")
             grid = box.grid_flow(columns=3, even_columns=True, align=True)
-            grid.prop(self, "experimental_output_capture", text="Output")
-            for attr in ("experimental_cycles_capture", "experimental_eevee_capture",
+            for attr in ("experimental_output_capture",
+                         "experimental_cycles_capture", "experimental_eevee_capture",
                          "experimental_workbench_capture", "experimental_view_layer_capture",
                          "experimental_scene_capture"):
                 grid.prop(self, attr)

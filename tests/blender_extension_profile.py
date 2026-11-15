@@ -11,16 +11,21 @@ import bpy
 addon_id = 'bl_ext.user_default.k_tools_render_preset_manager'
 assert addon_id in bpy.context.preferences.addons, list(bpy.context.preferences.addons.keys())
 prefs = bpy.context.preferences.addons[addon_id].preferences
-assert not prefs.experimental_output_capture
+toggles = ('experimental_output_capture', 'experimental_cycles_capture', 'experimental_eevee_capture',
+           'experimental_workbench_capture', 'experimental_view_layer_capture',
+           'experimental_scene_capture')
+assert all(getattr(prefs, attr) for attr in toggles), 'Panel discovery should be on by default'
 assert hasattr(bpy.ops.render_preset, 'audit_output_panels')
 
+# Turning Output discovery off drops the paths only its panels add.
+new_path = 'display_settings.display_device'
+prefs.experimental_output_capture = False
 baseline = {item.path for item in prefs.blacklist_items}
+assert 'render.resolution_x' in baseline
 prefs.experimental_output_capture = True
 assert prefs.experimental_output_capture
 enabled = {item.path for item in prefs.blacklist_items}
-assert 'render.resolution_x' in enabled
 assert baseline <= enabled
-new_path = 'display_settings.display_device'
 assert new_path in enabled
 
 props = bpy.context.scene.render_preset_settings
@@ -46,13 +51,14 @@ assert any(new_path in panel['properties']
 assert bpy.ops.render_preset.audit_output_panels() == {'FINISHED'}
 assert bpy.data.texts.get('Render_Preset_Output_Panel_Audit') is not None
 
-prefs.experimental_output_capture = False
-assert not prefs.experimental_output_capture
-assert enabled <= {item.path for item in prefs.blacklist_items}
-
+# A setting the user unchecked stays unchecked through resyncs and toggling.
 item = next(item for item in prefs.blacklist_items if item.path == new_path)
 item.is_enabled = False
 assert bpy.ops.render_preset.sync_blacklist() == {'FINISHED'}
+assert not next(item for item in prefs.blacklist_items
+                if item.path == new_path).is_enabled
+prefs.experimental_output_capture = False
+assert not prefs.experimental_output_capture
 assert not next(item for item in prefs.blacklist_items
                 if item.path == new_path).is_enabled
 prefs.experimental_output_capture = True

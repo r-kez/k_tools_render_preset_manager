@@ -50,7 +50,9 @@ def register():
     utils.ADDON_NAME = __package__
 
     if not bpy.app.background:
-        bpy.app.timers.register(_run_startup_sync, first_interval=1)
+        # persistent: opening a .blend (e.g. double-clicking one to start Blender)
+        # would otherwise drop the timer before it runs.
+        bpy.app.timers.register(_run_startup_sync, first_interval=1, persistent=True)
 
 def unregister():
     for cls in reversed(classes):
