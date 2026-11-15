@@ -66,17 +66,37 @@ def get_addon_preferences(context):
     """
     if not ADDON_NAME:
         return None
-    return bpy.context.preferences.addons[ADDON_NAME].preferences
+    addon = context.preferences.addons.get(ADDON_NAME)
+    return addon.preferences if addon else None
+
+
+# Preference toggle for each category whose panels can be captured live.
+PANEL_CAPTURE_PREFS = {
+    'BLENDER_OUTPUT': 'experimental_output_capture',
+    'CYCLES': 'experimental_cycles_capture',
+}
+
+
+def is_panel_capture_enabled(category, context=None):
+    attr = PANEL_CAPTURE_PREFS.get(category)
+    if attr is None:
+        return False
+    prefs = get_addon_preferences(context or bpy.context)
+    return bool(prefs and getattr(prefs, attr, False))
+
+
+def is_output_capture_enabled(context=None):
+    return is_panel_capture_enabled('BLENDER_OUTPUT', context)
 
 # =============================================================================
 #
 #
 # =============================================================================
 
-def get_all_render_settings():
+def get_all_render_settings(context=None):
     """
-    Junta a lista nativa do function_list.py com o JSON externo do usuário.
-    USE ESTA FUNÇÃO em vez de importar RENDER_SETTINGS diretamente!
+    Combine legacy settings, user entries and confirmed Output panel properties.
+    Panel discovery is opt-in and preserves every legacy entry.
     """
     from .custom_props_manager import load_custom_props
     import copy
@@ -90,6 +110,24 @@ def get_all_render_settings():
     # Adicionamos a chave que o seu save_preset_to_file está procurando
     if custom_entries:
         full_list["USER_CUSTOM"] = custom_entries
+
+    enabled = [category for category in PANEL_CAPTURE_PREFS
+               if is_panel_capture_enabled(category, context)]
+    if enabled:
+        from .output_panel_capture import capture_panels
+
+        # Each category stays self-contained: a setting its panels draw is
+        # saved with it even when another category also lists that path.
+        for category in enabled:
+            known = {tuple(parse_path_to_steps(path))
+                     for path, _ in full_list[category]}
+            for panel in capture_panels(context or bpy.context, category)['panels']:
+                for path, label in panel['properties']:
+                    key = tuple(parse_path_to_steps(path))
+                    if key not in known:
+                        full_list[category].append(
+                            (path, f"{panel['label']}: {label}"))
+                        known.add(key)
         
     return full_list
 
@@ -697,7 +735,7 @@ def get_current_settings(category_name, context):
     blacklist = get_blacklist_set(context)
 
     # Puxa a lista completa (Nativas + Customizadas do usuário)
-    all_settings = get_all_render_settings()
+    all_settings = get_all_render_settings(context)
 
     # Verifica na nova lista dinâmica em vez da estática
     if category_name not in all_settings:

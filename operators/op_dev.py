@@ -5,6 +5,92 @@ import random
 from ..properties.function_list import (
     RENDER_SETTINGS, 
 )
+from ..output_panel_capture import capture_panels, capture_output_states
+
+_AUDIT_TEXT_NAMES = {
+    'BLENDER_OUTPUT': "Render_Preset_Output_Panel_Audit",
+    'CYCLES': "Render_Preset_Cycles_Panel_Audit",
+}
+
+
+class RENDER_PRESET_OT_audit_output_panels(Operator):
+    """Inspect properties drawn by a category's panels without changing presets."""
+
+    bl_idname = "render_preset.audit_output_panels"
+    bl_label = "Audit Panels"
+    bl_options = {'REGISTER', 'INTERNAL'}
+
+    category: bpy.props.EnumProperty(
+        name="Category",
+        items=[
+            ('BLENDER_OUTPUT', "Output", "Blender's Output panels"),
+            ('CYCLES', "Cycles", "Cycles' Render panels"),
+        ],
+        default='BLENDER_OUTPUT',
+    ) # type: ignore
+
+    def execute(self, context):
+        category = self.category
+        capture = capture_panels(context, category)
+        if category == 'BLENDER_OUTPUT':
+            variants = capture_output_states(context)
+        else:
+            variants = {'states': [], 'errors': []}
+        legacy = {path for path, _ in RENDER_SETTINGS[category]}
+        captured = {path for panel in capture['panels'] for path, _ in panel['properties']}
+        key = lambda path: tuple(utils.parse_path_to_steps(path))
+        legacy_keys = {key(path) for path in legacy}
+        captured_keys = {key(path) for path in captured}
+        new_paths = sorted(path for path in captured if key(path) not in legacy_keys)
+        hidden_legacy = sorted(path for path in legacy if key(path) not in captured_keys)
+        lines = [
+            f"Blender: {bpy.app.version_string}",
+            f"Engine: {context.scene.render.engine}",
+            f"Category: {category}",
+            f"Panels with properties: {len(capture['panels'])}",
+            f"Properties drawn: {len(captured)}",
+            f"Drawn but absent from {category}: {len(new_paths)}",
+            f"Legacy paths not drawn in this UI state: {len(hidden_legacy)}",
+            "",
+            "Panel capture (current UI state)",
+        ]
+        for panel in capture['panels']:
+            lines.append(f"\n{panel['label']} [{panel['id']}]")
+            lines.extend(f"  {label}: {path}" for path, label in panel['properties'])
+        lines.extend(["", f"Drawn but absent from {category}"])
+        lines.extend(f"  {path}" for path in new_paths)
+        lines.extend(["", "Legacy paths not drawn in this UI state"])
+        lines.extend(f"  {path}" for path in hidden_legacy)
+        lines.extend(["", "Capture errors"])
+        lines.extend(f"  {error}" for error in capture['errors'])
+        lines.extend(["", "Template calls not inspected (legacy settings remain available)"])
+        lines.extend(f"  {reason}" for reason in capture['skipped'])
+
+        if variants['states'] or variants['errors']:
+            lines.extend(["", "UI state audit (temporary scene; original scene unchanged)"])
+        for state in variants['states']:
+            state_capture = state['capture']
+            state_paths = {path for panel in state_capture['panels']
+                           for path, _ in panel['properties']}
+            lines.append(f"\n{state['label']} [{state['file_format']}]: "
+                         f"{len(state_paths)} drawn, "
+                         f"{len(state_capture['errors'])} capture errors")
+            for panel in state_capture['panels']:
+                additional = [(path, label) for path, label in panel['properties']
+                              if key(path) not in captured_keys]
+                if additional:
+                    lines.append(f"  {panel['label']} [{panel['id']}]")
+                    lines.extend(f"    {label}: {path}" for path, label in additional)
+            lines.extend(f"  ERROR: {error}" for error in state_capture['errors'])
+            lines.extend(f"  GAP: {reason}" for reason in state_capture['skipped'])
+        lines.extend(f"  UNAVAILABLE: {error}" for error in variants['errors'])
+
+        name = _AUDIT_TEXT_NAMES[category]
+        text = bpy.data.texts.get(name) or bpy.data.texts.new(name)
+        text.clear()
+        text.write("\n".join(lines))
+        self.report({'INFO'}, f"Panel audit written to Text Editor: {name}")
+        return {'FINISHED'}
 
 
 def _check_property_exists(context, prop_path):
@@ -448,6 +534,7 @@ class RENDER_PRESET_OT_fuzz_test_scene(bpy.types.Operator):
 
 # --- REGISTRO DAS CLASSES ---
 classes = (
+    RENDER_PRESET_OT_audit_output_panels,
     RENDER_PRESET_OT_validate_list,
     RENDER_PRESET_OT_generate_new_list,
     RENDER_PRESET_OT_validation_report_popup,

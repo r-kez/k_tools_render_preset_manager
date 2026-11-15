@@ -5,7 +5,13 @@ from .properties.properties import BlacklistableProperty
 from .properties import function_list
 from . import utils
 from .ui_custom_props import KTOOLS_CustomPropItem
-from .panel_scraper import scrape_category_panels
+from .panel_scraper import scrape_category_panels, clear_scraper_cache
+
+
+def _update_output_capture(self, context):
+    clear_scraper_cache()
+    if self.experimental_output_capture and hasattr(bpy.ops.render_preset, 'sync_blacklist'):
+        bpy.ops.render_preset.sync_blacklist()
 
 #########################################################
 # UI LIST FOR BLACKLIST
@@ -155,6 +161,21 @@ class KToolsRenderPresetManagerPreferences(AddonPreferences):
         name="Enable Developer Extras",
         description="Show extra tools for addon maintenance and debugging",
         default=False
+    ) # type: ignore
+
+    experimental_output_capture: bpy.props.BoolProperty(
+        name="Experimental Output Panel Discovery",
+        description="Add properties drawn by Blender's Output panels to the existing preset list",
+        default=False,
+        update=_update_output_capture,
+    ) # type: ignore
+
+    experimental_cycles_capture: bpy.props.BoolProperty(
+        name="Experimental Cycles Panel Discovery",
+        description=("Add properties drawn by Cycles' Render panels to the existing preset list. "
+                     "Panels are read while Cycles is the active render engine"),
+        default=False,
+        update=_update_output_capture,
     ) # type: ignore
 
     dev_scraper_source_type: bpy.props.EnumProperty(
@@ -348,6 +369,9 @@ class KToolsRenderPresetManagerPreferences(AddonPreferences):
         if self.developer_extras:
             box.separator(factor=0.5)
 
+            box.prop(self, "experimental_output_capture")
+            box.prop(self, "experimental_cycles_capture")
+
             box.label(text="Property Auditor")
             
             box.prop(self, "dev_audit_category")
@@ -375,6 +399,14 @@ class KToolsRenderPresetManagerPreferences(AddonPreferences):
             row.operator("render_preset.validate_list",
                         text="Validate",
                         icon='FILE_REFRESH')
+
+            row = box.row(align=True)
+            row.operator("render_preset.audit_output_panels",
+                         text="Audit Output Panels",
+                         icon='OUTPUT').category = 'BLENDER_OUTPUT'
+            row.operator("render_preset.audit_output_panels",
+                         text="Audit Cycles Panels",
+                         icon='SHADING_RENDERED').category = 'CYCLES'
             
             row.separator()
             row = box.row(align=True)

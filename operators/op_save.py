@@ -7,7 +7,7 @@ from bpy_extras.io_utils import ExportHelper
 from .. import utils
 from ..utils import (
     get_current_settings,
-    )
+        )
 
 def get_addon_version():
     """Lê a versão do addon dinamicamente direto do blender_manifest.toml"""
@@ -91,16 +91,19 @@ def save_preset_to_file(context, filepath):
                     p_id = p_info["id"]
                     p_label = p_info["label"]
                     p_props = {}
+                    property_labels = {}
                     
                     for prop_path, short_name, full_label in p_info["properties"]:
                         if prop_path in settings:
                             p_props[prop_path] = settings[prop_path]
+                            property_labels[prop_path] = full_label
                             
                     if p_props:
                         category_panels_data[p_id] = {
                             "label": p_label,
                             "parent_id": p_info["parent_id"],
-                            "properties": p_props
+                            "properties": p_props,
+                            "property_labels": property_labels,
                         }
                         
                 preset_data["categories"][category] = {
@@ -239,4 +242,4 @@ classes = (
     RENDER_PRESET_OT_save,
     RENDER_PRESET_OT_save_to_user_repo,
     RENDER_PRESET_OT_save_overwrite_confirm,
-)        
+)

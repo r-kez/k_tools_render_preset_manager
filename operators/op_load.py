@@ -32,12 +32,34 @@ from ..panel_scraper import scrape_category_panels
 
 RENDER_SETTINGS = get_all_render_settings()
 
+
+def get_preset_label_map(preset_data, context):
+    """Prefer labels stored with the preset over labels in the current build."""
+    labels = {
+        path: label
+        for category in utils.get_all_render_settings(context).values()
+        for path, label in category
+    }
+    for category in preset_data.get("categories", {}).values():
+        for panel in category.get("panels", {}).values():
+            labels.update(panel.get("property_labels", {}))
+    return labels
+
 def ensure_preset_v2_compatibility(preset_data, context=None):
     """
     Ensures that a loaded preset dictionary contains the v2.0 'categories' (panel-structured) data.
     If loading a legacy v1.0 preset, it dynamically maps the flat 'render_presets' data into panels.
     """
     if "categories" in preset_data and preset_data["categories"]:
+        if not preset_data.get("render_presets"):
+            preset_data["render_presets"] = {
+                category: {
+                    path: value
+                    for panel in category_data.get("panels", {}).values()
+                    for path, value in panel.get("properties", {}).items()
+                }
+                for category, category_data in preset_data["categories"].items()
+            }
         return preset_data
 
     render_presets = preset_data.get("render_presets", {})
@@ -385,11 +407,7 @@ class RENDER_PRESET_OT_load_preview(bpy.types.Operator):
         self.changes.clear()
 
         preset_data = json.loads(context.scene.render_preset_settings.temp_preset_data)
-        label_map   = {
-            path: label
-            for category in RENDER_SETTINGS.values()
-            for path, label in category
-        }
+        label_map = get_preset_label_map(preset_data, context)
         blacklist = utils.get_blacklist_set(context)
 
         # Populate the changes collection with all differing settings
@@ -713,6 +731,7 @@ class RENDER_PRESET_OT_load_confirm(Operator):
     def execute(self, context):
         scene        = context.scene
         preset_props = scene.render_preset_settings
+        blacklist    = utils.get_blacklist_set(context)
 
         # --- Save undo snapshot ---
         preset_props.undo_data = json.dumps({
@@ -721,7 +740,8 @@ class RENDER_PRESET_OT_load_confirm(Operator):
         })
 
         try:
-            preset_data = json.loads(self.preset_data)
+            preset_data = ensure_preset_v2_compatibility(
+                json.loads(self.preset_data), context)
             preset_props.loaded_preset_name = preset_data.get("preset_name", "Unknown")
 
             engines_to_load = (
@@ -736,7 +756,7 @@ class RENDER_PRESET_OT_load_confirm(Operator):
                 engine_settings = preset_data["render_presets"][engine_name]
 
                 # Pass 1: Apply render engine first
-                if "render.engine" in engine_settings:
+                if "render.engine" in engine_settings and "render.engine" not in blacklist:
                     target_engine = engine_settings["render.engine"]
                     success, _    = utils.set_nested_attr(scene, "render.engine", target_engine)
 
@@ -754,7 +774,7 @@ class RENDER_PRESET_OT_load_confirm(Operator):
 
                 # Pass 2: Apply all remaining properties
                 for path, value in engine_settings.items():
-                    if path == "render.engine":
+                    if path == "render.engine" or path in blacklist:
                         continue
 
                     success, _ = utils.set_nested_attr(scene, path, value)

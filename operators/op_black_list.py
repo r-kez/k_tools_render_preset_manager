@@ -15,7 +15,10 @@ class RENDER_PRESET_OT_sync_blacklist(bpy.types.Operator):
         prefs = utils.get_addon_preferences(context)
         
         # 1. Guarda as escolhas atuais para não resetar os checkboxes do usuário
-        existing_choices = {item.path: item.is_enabled for item in prefs.blacklist_items}
+        existing_choices = {
+            item.path: (item.is_enabled, item.name, item.category)
+            for item in prefs.blacklist_items
+        }
         
         # 2. Limpa a lista defasada da memória
         prefs.blacklist_items.clear()
@@ -25,14 +28,28 @@ class RENDER_PRESET_OT_sync_blacklist(bpy.types.Operator):
         latest_settings = utils.get_all_render_settings()
         
         # 4. Repopula a coleção
+        seen_paths = set()
         for category_name, properties in latest_settings.items():
             for path, friendly_name in properties:
+                if path in seen_paths:
+                    continue
                 new_item = prefs.blacklist_items.add()
                 
                 new_item.name = friendly_name 
                 new_item.path = path
                 new_item.category = category_name
-                new_item.is_enabled = existing_choices.get(path, True)
+                new_item.is_enabled = existing_choices.get(path, (True, "", ""))[0]
+                seen_paths.add(path)
+
+        # Keep disabled paths from presets made in other Blender versions.
+        for path, (enabled, name, category) in existing_choices.items():
+            if path in seen_paths or enabled:
+                continue
+            item = prefs.blacklist_items.add()
+            item.path = path
+            item.name = name
+            item.category = category
+            item.is_enabled = False
 
         for window in context.window_manager.windows:
             for area in window.screen.areas:
