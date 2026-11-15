@@ -719,6 +719,20 @@ def test_curve_precision():
 # Render Settings Collection
 # =============================================================================
 
+def read_setting_value(scene, setting_path):
+    """
+    Reads a setting in the same form a preset stores it, so values read from
+    the scene can be compared with preset values: curve mappings become dicts,
+    and Color/Vector/array values become lists.
+    """
+    value = get_nested_attr(scene, setting_path)
+    if setting_path in CURVE_MAPPING_PATHS:
+        return serialize_curve_mapping(value)
+    if isinstance(value, (Color, Vector, bpy.types.bpy_prop_array)):
+        return list(value)
+    return value
+
+
 def get_current_settings(category_name, context):
     """
     Collects the current values of all properties defined in RENDER_SETTINGS
@@ -751,12 +765,7 @@ def get_current_settings(category_name, context):
             continue
 
         try:
-            value = get_nested_attr(scene, setting_path)
-
-            if setting_path in CURVE_MAPPING_PATHS:
-                value = serialize_curve_mapping(value)
-            elif isinstance(value, (Color, Vector, bpy.types.bpy_prop_array)):
-                value = list(value)
+            value = read_setting_value(scene, setting_path)
 
             if value is not None:
                 settings[setting_path] = value

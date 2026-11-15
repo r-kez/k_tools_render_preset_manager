@@ -95,6 +95,13 @@ try:
             assert legacy & set(before[category]) <= set(saved), 'Discovery lost legacy values'
             assert captured <= set(saved), (category, captured - set(saved))
 
+            # Right after saving nothing differs, so the load preview must list
+            # no changes (curves and colors used to always show as changed).
+            from k_tools_render_preset_manager.operators.op_load import are_values_equal
+            phantom = [path for path, value in saved.items()
+                       if not are_values_equal(utils.read_setting_value(probe_scene, path), value)]
+            assert not phantom, (category, phantom)
+
             toggles = [path for path in sorted(captured) if isinstance(saved[path], bool)]
             changed = []
             for path in toggles:

@@ -144,6 +144,12 @@ def are_values_equal(val1, val2, tolerance=1e-6):
         # Compara cada item da lista recursivamente.
         return all(are_values_equal(i1, i2, tolerance) for i1, i2 in zip(val1, val2))
 
+    # Dicionários (ex.: curvas serializadas) são comparados chave a chave.
+    if isinstance(val1, dict):
+        if not isinstance(val2, dict) or val1.keys() != val2.keys():
+            return False
+        return all(are_values_equal(val1[key], val2[key], tolerance) for key in val1)
+
     # 3. Trata números (int, float) com tolerância.
     # Tenta converter ambos para float para uma comparação justa.
     try:
@@ -425,7 +431,9 @@ class RENDER_PRESET_OT_load_preview(bpy.types.Operator):
         # Populate the changes collection with all differing settings
         for category_name, preset_settings in preset_data.get("render_presets", {}).items():
             for setting_path, preset_value in preset_settings.items():
-                current_value = utils.get_nested_attr(context.scene, setting_path)
+                if setting_path in OBSOLETE_PATHS:
+                    continue
+                current_value = utils.read_setting_value(context.scene, setting_path)
 
                 if not are_values_equal(current_value, preset_value):
                     item = self.changes.add()
@@ -656,7 +664,7 @@ class RENDER_PRESET_OT_load_preview(bpy.types.Operator):
                 continue
 
             original_value = json.loads(item.preset_value_json)
-            current_value  = utils.get_nested_attr(scene, item.setting_path)
+            current_value  = utils.read_setting_value(scene, item.setting_path)
 
             if not are_values_equal(current_value, original_value):
                 success, _ = utils.set_nested_attr(scene, item.setting_path, original_value)
