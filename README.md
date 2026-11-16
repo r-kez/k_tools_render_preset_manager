@@ -24,6 +24,12 @@ This tool is designed to streamline your workflow, allowing for quick, consisten
 - **Robust Data Support**: Correctly saves and loads complex data types, including Colors, Vectors, and custom Curves (`CurveMapping` objects for things like Motion Blur).  
 - **Automation Ready**: Includes silent operators (`render_preset.load_from_path`, `render_preset.undo_direct`) callable from scripts or addons for automated workflows (e.g., apply a preview preset, render, and revert).  
 
+### Panel discovery
+
+Presets include the properties Blender's own Properties Editor panels draw, so a preset contains the settings you actually see in the UI, organized by the panel they appear in (for example "Sampling > Viewport"). Discovery covers **Output**, **Cycles**, **EEVEE**, **Workbench**, **View Layer** and **Scene**. Engine categories hold everything the Render tab shows for that engine (including shared panels such as Color Management and Simplify), and are read while that engine is active. The built-in property list remains the fallback for settings hidden by the current UI state and for controls drawn inside Blender's UI templates (such as curves and lists).
+
+Discovery is on by default and can be turned off per category in Addon Preferences > Developer Tools > **Panel Discovery**. **Audit Panels** writes a per-category report to Blender's Text Editor showing confirmed properties, unavailable states, and template calls that were not inspected. Octane panels are not covered yet.
+
 ---
 
 ## Installation

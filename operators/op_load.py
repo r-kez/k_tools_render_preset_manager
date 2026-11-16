@@ -29,15 +29,49 @@ from ..utils import get_all_render_settings
 from .. import utils
 from ..utils import PresetChangeItem
 from ..panel_scraper import scrape_category_panels
+from ..properties.function_list import OBSOLETE_PATHS
 
 RENDER_SETTINGS = get_all_render_settings()
+
+
+def get_preset_label_map(preset_data, context):
+    """Prefer labels stored with the preset over labels in the current build."""
+    labels = {
+        path: label
+        for category in utils.get_all_render_settings(context).values()
+        for path, label in category
+    }
+    for category in preset_data.get("categories", {}).values():
+        for panel in category.get("panels", {}).values():
+            labels.update(panel.get("property_labels", {}))
+    return labels
 
 def ensure_preset_v2_compatibility(preset_data, context=None):
     """
     Ensures that a loaded preset dictionary contains the v2.0 'categories' (panel-structured) data.
     If loading a legacy v1.0 preset, it dynamically maps the flat 'render_presets' data into panels.
+    Obsolete paths saved by older versions are dropped so they are never applied.
     """
+    for settings in preset_data.get("render_presets", {}).values():
+        for path in OBSOLETE_PATHS.intersection(settings):
+            del settings[path]
+    for category_data in preset_data.get("categories", {}).values():
+        for panel in category_data.get("panels", {}).values():
+            for key in ("properties", "property_labels"):
+                values = panel.get(key, {})
+                for path in OBSOLETE_PATHS.intersection(values):
+                    del values[path]
+
     if "categories" in preset_data and preset_data["categories"]:
+        if not preset_data.get("render_presets"):
+            preset_data["render_presets"] = {
+                category: {
+                    path: value
+                    for panel in category_data.get("panels", {}).values()
+                    for path, value in panel.get("properties", {}).items()
+                }
+                for category, category_data in preset_data["categories"].items()
+            }
         return preset_data
 
     render_presets = preset_data.get("render_presets", {})
@@ -110,6 +144,12 @@ def are_values_equal(val1, val2, tolerance=1e-6):
         # Compara cada item da lista recursivamente.
         return all(are_values_equal(i1, i2, tolerance) for i1, i2 in zip(val1, val2))
 
+    # Dicionários (ex.: curvas serializadas) são comparados chave a chave.
+    if isinstance(val1, dict):
+        if not isinstance(val2, dict) or val1.keys() != val2.keys():
+            return False
+        return all(are_values_equal(val1[key], val2[key], tolerance) for key in val1)
+
     # 3. Trata números (int, float) com tolerância.
     # Tenta converter ambos para float para uma comparação justa.
     try:
@@ -142,7 +182,7 @@ def compare_settings(current, preset):
     return {
         key: {"current": current.get(key), "preset": preset_value}
         for key, preset_value in preset.items()
-        if current.get(key) != preset_value
+        if key not in OBSOLETE_PATHS and current.get(key) != preset_value
     }
 
 
@@ -385,17 +425,15 @@ class RENDER_PRESET_OT_load_preview(bpy.types.Operator):
         self.changes.clear()
 
         preset_data = json.loads(context.scene.render_preset_settings.temp_preset_data)
-        label_map   = {
-            path: label
-            for category in RENDER_SETTINGS.values()
-            for path, label in category
-        }
+        label_map = get_preset_label_map(preset_data, context)
         blacklist = utils.get_blacklist_set(context)
 
         # Populate the changes collection with all differing settings
         for category_name, preset_settings in preset_data.get("render_presets", {}).items():
             for setting_path, preset_value in preset_settings.items():
-                current_value = utils.get_nested_attr(context.scene, setting_path)
+                if setting_path in OBSOLETE_PATHS:
+                    continue
+                current_value = utils.read_setting_value(context.scene, setting_path)
 
                 if not are_values_equal(current_value, preset_value):
                     item = self.changes.add()
@@ -626,7 +664,7 @@ class RENDER_PRESET_OT_load_preview(bpy.types.Operator):
                 continue
 
             original_value = json.loads(item.preset_value_json)
-            current_value  = utils.get_nested_attr(scene, item.setting_path)
+            current_value  = utils.read_setting_value(scene, item.setting_path)
 
             if not are_values_equal(current_value, original_value):
                 success, _ = utils.set_nested_attr(scene, item.setting_path, original_value)
@@ -713,6 +751,7 @@ class RENDER_PRESET_OT_load_confirm(Operator):
     def execute(self, context):
         scene        = context.scene
         preset_props = scene.render_preset_settings
+        blacklist    = utils.get_blacklist_set(context)
 
         # --- Save undo snapshot ---
         preset_props.undo_data = json.dumps({
@@ -721,7 +760,8 @@ class RENDER_PRESET_OT_load_confirm(Operator):
         })
 
         try:
-            preset_data = json.loads(self.preset_data)
+            preset_data = ensure_preset_v2_compatibility(
+                json.loads(self.preset_data), context)
             preset_props.loaded_preset_name = preset_data.get("preset_name", "Unknown")
 
             engines_to_load = (
@@ -736,7 +776,7 @@ class RENDER_PRESET_OT_load_confirm(Operator):
                 engine_settings = preset_data["render_presets"][engine_name]
 
                 # Pass 1: Apply render engine first
-                if "render.engine" in engine_settings:
+                if "render.engine" in engine_settings and "render.engine" not in blacklist:
                     target_engine = engine_settings["render.engine"]
                     success, _    = utils.set_nested_attr(scene, "render.engine", target_engine)
 
@@ -754,7 +794,7 @@ class RENDER_PRESET_OT_load_confirm(Operator):
 
                 # Pass 2: Apply all remaining properties
                 for path, value in engine_settings.items():
-                    if path == "render.engine":
+                    if path == "render.engine" or path in blacklist:
                         continue
 
                     success, _ = utils.set_nested_attr(scene, path, value)

@@ -5,7 +5,14 @@ from .properties.properties import BlacklistableProperty
 from .properties import function_list
 from . import utils
 from .ui_custom_props import KTOOLS_CustomPropItem
-from .panel_scraper import scrape_category_panels
+from .panel_scraper import scrape_category_panels, clear_scraper_cache
+
+
+def _update_output_capture(self, context):
+    # Any panel discovery toggle changes the property list, so resync it.
+    clear_scraper_cache()
+    if hasattr(bpy.ops.render_preset, 'sync_blacklist'):
+        bpy.ops.render_preset.sync_blacklist()
 
 #########################################################
 # UI LIST FOR BLACKLIST
@@ -155,6 +162,52 @@ class KToolsRenderPresetManagerPreferences(AddonPreferences):
         name="Enable Developer Extras",
         description="Show extra tools for addon maintenance and debugging",
         default=False
+    ) # type: ignore
+
+    experimental_output_capture: bpy.props.BoolProperty(
+        name="Output",
+        description="Add properties drawn on the Output tab to the existing preset list",
+        default=True,
+        update=_update_output_capture,
+    ) # type: ignore
+
+    experimental_cycles_capture: bpy.props.BoolProperty(
+        name="Cycles",
+        description=("Add properties drawn on the Render tab for Cycles to the existing preset list. "
+                     "Panels are read while Cycles is the active render engine"),
+        default=True,
+        update=_update_output_capture,
+    ) # type: ignore
+
+    experimental_eevee_capture: bpy.props.BoolProperty(
+        name="EEVEE",
+        description=("Add properties drawn on the Render tab for EEVEE to the existing preset list. "
+                     "Panels are read while EEVEE is the active render engine"),
+        default=True,
+        update=_update_output_capture,
+    ) # type: ignore
+
+    experimental_workbench_capture: bpy.props.BoolProperty(
+        name="Workbench",
+        description=("Add properties drawn on the Render tab for Workbench to the existing preset list. "
+                     "Panels are read while Workbench is the active render engine"),
+        default=True,
+        update=_update_output_capture,
+    ) # type: ignore
+
+    experimental_view_layer_capture: bpy.props.BoolProperty(
+        name="View Layer",
+        description=("Add properties drawn on the View Layer tab, including the active engine's "
+                     "passes, to the existing preset list"),
+        default=True,
+        update=_update_output_capture,
+    ) # type: ignore
+
+    experimental_scene_capture: bpy.props.BoolProperty(
+        name="Scene",
+        description="Add properties drawn on the Scene tab to the existing preset list",
+        default=True,
+        update=_update_output_capture,
     ) # type: ignore
 
     dev_scraper_source_type: bpy.props.EnumProperty(
@@ -348,6 +401,14 @@ class KToolsRenderPresetManagerPreferences(AddonPreferences):
         if self.developer_extras:
             box.separator(factor=0.5)
 
+            box.label(text="Panel Discovery (read settings from Blender's panels)")
+            grid = box.grid_flow(columns=3, even_columns=True, align=True)
+            for attr in ("experimental_output_capture",
+                         "experimental_cycles_capture", "experimental_eevee_capture",
+                         "experimental_workbench_capture", "experimental_view_layer_capture",
+                         "experimental_scene_capture"):
+                grid.prop(self, attr)
+
             box.label(text="Property Auditor")
             
             box.prop(self, "dev_audit_category")
@@ -375,6 +436,10 @@ class KToolsRenderPresetManagerPreferences(AddonPreferences):
             row.operator("render_preset.validate_list",
                         text="Validate",
                         icon='FILE_REFRESH')
+
+            row = box.row(align=True)
+            row.operator_menu_enum("render_preset.audit_output_panels", "category",
+                                   text="Audit Panels", icon='VIEWZOOM')
             
             row.separator()
             row = box.row(align=True)

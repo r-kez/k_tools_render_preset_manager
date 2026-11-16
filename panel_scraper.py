@@ -119,10 +119,13 @@ def scrape_category_panels(category_key, context=None):
     ]
     """
     global _SCRAPED_PANELS_CACHE
+
+    from . import utils
+    live_output = utils.is_panel_capture_enabled(category_key, context)
     
     # Check cache first
     cache_key = f"{category_key}_{bpy.app.version_string}"
-    if cache_key in _SCRAPED_PANELS_CACHE:
+    if not live_output and cache_key in _SCRAPED_PANELS_CACHE:
         return _SCRAPED_PANELS_CACHE[cache_key]
         
     config = CATEGORY_CONTEXT_MAP.get(category_key, {})
@@ -132,7 +135,8 @@ def scrape_category_panels(category_key, context=None):
     panels_by_ctx = get_all_registered_panels(context)
     candidate_panels = panels_by_ctx.get(target_ctx, [])
     
-    # Get known settings list as base reference for clean labels and accuracy
+    # Keep legacy paths as fallback; the opt-in Output capture reassigns paths
+    # actually drawn by panels and adds confirmed new paths below.
     baseline_props = RENDER_SETTINGS.get(category_key, [])
     if category_key == "BLENDER_SCENE":
         baseline_props = baseline_props + COMMON_COLOR_MANAGEMENT
@@ -185,10 +189,52 @@ def scrape_category_panels(category_key, context=None):
                 "properties": []
             }
         panel_dict[p_id]["properties"].extend(props)
-        
+
+    if live_output:
+        from .output_panel_capture import capture_panels
+
+        def key_of(path):
+            return tuple(utils.parse_path_to_steps(path))
+
+        baseline_by_key = {key_of(path): (path, label) for path, label in baseline_props}
+        placed = set()
+        live_panels = []
+        captured = capture_panels(context or bpy.context, category_key)
+        # Panels Blender actually draws come first, in the order the UI shows them.
+        for captured_panel in captured['panels']:
+            properties = []
+            for captured_path, short_name in captured_panel['properties']:
+                key = key_of(captured_path)
+                if key in placed:
+                    continue
+                legacy_path, full_label = baseline_by_key.get(
+                    key, (captured_path, f"{captured_panel['label']}: {short_name}"))
+                properties.append((legacy_path, short_name, full_label))
+                placed.add(key)
+            if properties:
+                live_panels.append({
+                    'id': captured_panel['id'],
+                    'label': captured_panel['label'],
+                    'parent_id': captured_panel['parent_id'],
+                    'properties': properties,
+                })
+        # Legacy entries the current UI does not draw stay listed after them.
+        live_ids = {panel['id'] for panel in live_panels}
+        for panel in panel_dict.values():
+            panel['properties'] = [item for item in panel['properties']
+                                   if key_of(item[0]) not in placed]
+        for panel in live_panels:
+            if panel['id'] in panel_dict:
+                panel['properties'].extend(panel_dict[panel['id']]['properties'])
+        panel_dict = {
+            **{panel['id']: panel for panel in live_panels},
+            **{p_id: panel for p_id, panel in panel_dict.items() if p_id not in live_ids},
+        }
+
     # Filter out empty panels
     result_panels = [p for p in panel_dict.values() if p["properties"]]
     
     # Store in cache
-    _SCRAPED_PANELS_CACHE[cache_key] = result_panels
+    if not live_output:
+        _SCRAPED_PANELS_CACHE[cache_key] = result_panels
     return result_panels

@@ -66,17 +66,41 @@ def get_addon_preferences(context):
     """
     if not ADDON_NAME:
         return None
-    return bpy.context.preferences.addons[ADDON_NAME].preferences
+    addon = context.preferences.addons.get(ADDON_NAME)
+    return addon.preferences if addon else None
+
+
+# Preference toggle for each category whose panels can be captured live.
+PANEL_CAPTURE_PREFS = {
+    'BLENDER_OUTPUT': 'experimental_output_capture',
+    'CYCLES': 'experimental_cycles_capture',
+    'BLENDER_EEVEE': 'experimental_eevee_capture',
+    'BLENDER_WORKBENCH': 'experimental_workbench_capture',
+    'BLENDER_VIEW_LAYER': 'experimental_view_layer_capture',
+    'BLENDER_SCENE': 'experimental_scene_capture',
+}
+
+
+def is_panel_capture_enabled(category, context=None):
+    attr = PANEL_CAPTURE_PREFS.get(category)
+    if attr is None:
+        return False
+    prefs = get_addon_preferences(context or bpy.context)
+    return bool(prefs and getattr(prefs, attr, False))
+
+
+def is_output_capture_enabled(context=None):
+    return is_panel_capture_enabled('BLENDER_OUTPUT', context)
 
 # =============================================================================
 #
 #
 # =============================================================================
 
-def get_all_render_settings():
+def get_all_render_settings(context=None):
     """
-    Junta a lista nativa do function_list.py com o JSON externo do usuário.
-    USE ESTA FUNÇÃO em vez de importar RENDER_SETTINGS diretamente!
+    Combine legacy settings, user entries and confirmed Output panel properties.
+    Panel discovery is opt-in and preserves every legacy entry.
     """
     from .custom_props_manager import load_custom_props
     import copy
@@ -90,6 +114,24 @@ def get_all_render_settings():
     # Adicionamos a chave que o seu save_preset_to_file está procurando
     if custom_entries:
         full_list["USER_CUSTOM"] = custom_entries
+
+    enabled = [category for category in PANEL_CAPTURE_PREFS
+               if is_panel_capture_enabled(category, context)]
+    if enabled:
+        from .output_panel_capture import capture_panels
+
+        # Each category stays self-contained: a setting its panels draw is
+        # saved with it even when another category also lists that path.
+        for category in enabled:
+            known = {tuple(parse_path_to_steps(path))
+                     for path, _ in full_list[category]}
+            for panel in capture_panels(context or bpy.context, category)['panels']:
+                for path, label in panel['properties']:
+                    key = tuple(parse_path_to_steps(path))
+                    if key not in known:
+                        full_list[category].append(
+                            (path, f"{panel['label']}: {label}"))
+                        known.add(key)
         
     return full_list
 
@@ -244,12 +286,8 @@ def resolve_path_to_target(base_obj, path):
     elif path.startswith("world."):
         current_obj = bpy.context.scene.world
         steps = parse_path_to_steps(path[len("world."):])
-    elif path.startswith("oct_view_cam."):
-        scene = bpy.context.scene
-        if not getattr(scene, "camera", None) or not scene.camera.data:
-            return None, None, None
-        current_obj = scene.camera.data
-        steps = parse_path_to_steps(path[len("oct_view_cam."):])
+    # Note: "oct_view_cam." paths are plain scene paths (scene.oct_view_cam holds
+    # Octane's preview imager/postprocess settings) and resolve below.
     else:
         current_obj = base_obj
         steps = parse_path_to_steps(path)
@@ -677,6 +715,20 @@ def test_curve_precision():
 # Render Settings Collection
 # =============================================================================
 
+def read_setting_value(scene, setting_path):
+    """
+    Reads a setting in the same form a preset stores it, so values read from
+    the scene can be compared with preset values: curve mappings become dicts,
+    and Color/Vector/array values become lists.
+    """
+    value = get_nested_attr(scene, setting_path)
+    if setting_path in CURVE_MAPPING_PATHS:
+        return serialize_curve_mapping(value)
+    if isinstance(value, (Color, Vector, bpy.types.bpy_prop_array)):
+        return list(value)
+    return value
+
+
 def get_current_settings(category_name, context):
     """
     Collects the current values of all properties defined in RENDER_SETTINGS
@@ -697,7 +749,7 @@ def get_current_settings(category_name, context):
     blacklist = get_blacklist_set(context)
 
     # Puxa a lista completa (Nativas + Customizadas do usuário)
-    all_settings = get_all_render_settings()
+    all_settings = get_all_render_settings(context)
 
     # Verifica na nova lista dinâmica em vez da estática
     if category_name not in all_settings:
@@ -709,12 +761,7 @@ def get_current_settings(category_name, context):
             continue
 
         try:
-            value = get_nested_attr(scene, setting_path)
-
-            if setting_path in CURVE_MAPPING_PATHS:
-                value = serialize_curve_mapping(value)
-            elif isinstance(value, (Color, Vector, bpy.types.bpy_prop_array)):
-                value = list(value)
+            value = read_setting_value(scene, setting_path)
 
             if value is not None:
                 settings[setting_path] = value

@@ -5,6 +5,17 @@ import bpy
 ## ("<ACTIVE_VIEW_LAYER>.use_pass_combined", "Pass: Combined"), - For properties that have the view layer name on it
 ## BV = Blender Version
 
+## Removed properties that are still ignored when an older preset contains them.
+## eevee.use_bloom is not drawn since EEVEE Next, and in Blender 4.2 setting it
+## also clears Shadows, Soft Shadows, Volumetric Lights and Temporal Reprojection.
+OBSOLETE_PATHS = {
+    "eevee.use_bloom",
+    "eevee.bloom_threshold",
+    "eevee.bloom_knee",
+    "eevee.bloom_radius",
+    "eevee.bloom_intensity",
+}
+
 ## Curves needs a special treatment
 CURVE_MAPPING_PATHS = [
     "render.motion_blur_shutter_curve",
@@ -269,12 +280,7 @@ RENDER_SETTINGS = {
         ("eevee.gtao_distance",                     "Ambient Occlusion: Distance"),                 # Obsolete  [Should be REMOVED soon] 
         ("eevee.gtao_factor",                       "Ambient Occlusion: Factor"),                   # Obsolete  [Should be REMOVED soon] 
         ("eevee.gtao_quality",                      "Ambient Occlusion: Quality"),                  # Obsolete  [Should be REMOVED soon] 
-        # Bloom              
-        ("eevee.use_bloom",                         "Bloom: Use Bloom"),                            # Obsolete  [Should be REMOVED soon] 
-        ("eevee.bloom_threshold",                   "Bloom: Threshold"),                            # Obsolete  [Should be REMOVED soon] 
-        ("eevee.bloom_knee",                        "Bloom: Knee"),                                 # Obsolete  [Should be REMOVED soon] 
-        ("eevee.bloom_radius",                      "Bloom: Radius"),                               # Obsolete  [Should be REMOVED soon] 
-        ("eevee.bloom_intensity",                   "Bloom: Intensity"),                            # Obsolete  [Should be REMOVED soon] 
+        # Bloom: [REMOVED] Obsolete since EEVEE Next (4.2). See OBSOLETE_PATHS.
     # Clamping:
         # Surface
         ("eevee.clamp_surface_direct",              "Clamping: Surface Direct Clamp"),
