@@ -2,7 +2,16 @@
 # Usage: bash tests/run_all_builds.sh [out_dir]   (BLENDER_BUILDS overrides the builds folder)
 # Runs every test in every supported build (Blender >= 4.2) in parallel.
 ADDON="$(cd "$(dirname "$0")/.." && pwd)"; OUT="${1:-${TMPDIR:-/tmp}/render_preset_matrix}"; mkdir -p "$OUT/pkg"; rm -f "$OUT"/*.summary "$OUT"/*.log "$OUT"/pkg/*.zip
-TESTS="blender_native_capture blender_cycles_capture blender_output_capture_smoke blender_output_experimental blender_output_save_load blender_blacklist_sync blender_output_matrix"
+TESTS="
+  blender_native_capture
+  blender_octane_preview_paths
+  blender_cycles_capture
+  blender_output_capture_smoke
+  blender_output_experimental
+  blender_output_save_load
+  blender_blacklist_sync
+  blender_output_matrix
+"
 BUILDS="blender-4.2.15 blender-4.5.4 blender-5.2.0-beta blender-5.3.0-beta blender-5.4.0-alpha OctaneBlender29.19.0 OctaneBlender30.11.0"
 ROOT="${BLENDER_BUILDS:-/f/Blender Builds}"
 cd "$ADDON"

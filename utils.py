@@ -286,12 +286,8 @@ def resolve_path_to_target(base_obj, path):
     elif path.startswith("world."):
         current_obj = bpy.context.scene.world
         steps = parse_path_to_steps(path[len("world."):])
-    elif path.startswith("oct_view_cam."):
-        scene = bpy.context.scene
-        if not getattr(scene, "camera", None) or not scene.camera.data:
-            return None, None, None
-        current_obj = scene.camera.data
-        steps = parse_path_to_steps(path[len("oct_view_cam."):])
+    # Note: "oct_view_cam." paths are plain scene paths (scene.oct_view_cam holds
+    # Octane's preview imager/postprocess settings) and resolve below.
     else:
         current_obj = base_obj
         steps = parse_path_to_steps(path)
