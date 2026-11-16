@@ -29,7 +29,9 @@ SAVE_FLAGS = {
 }
 # (category, engine, paths that must be captured in every supported version)
 CASES = [
-    ('BLENDER_EEVEE', EEVEE, {'render.film_transparent', 'view_settings.view_transform'}),
+    # render.simplify_gpencil: its draw() comes from a mixin listed after Panel in the MRO.
+    ('BLENDER_EEVEE', EEVEE, {'render.film_transparent', 'view_settings.view_transform',
+                              'render.simplify_gpencil'}),
     ('BLENDER_WORKBENCH', 'BLENDER_WORKBENCH',
      {'display.shading.light', 'display.shading.show_cavity', 'display.render_aa'}),
     ('BLENDER_VIEW_LAYER', 'CYCLES',

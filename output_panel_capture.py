@@ -207,10 +207,16 @@ class _DrawContext:
 
 
 def _find_method(panel_class, name):
-    """Find a draw method defined by the panel or its Python mixins."""
+    """Find a draw method defined by the panel or its Python mixins.
+
+    Mixins can come after bpy.types.Panel in the MRO (for example
+    RENDER_PT_simplify_greasepencil gets draw() from GreasePencilSimplifyPanel),
+    so the whole MRO is searched, skipping only Blender's own base classes.
+    """
+    blender_bases = {bpy.types.Panel, bpy.types.bpy_struct, object}
     for base in panel_class.__mro__:
-        if base is bpy.types.Panel:
-            return None
+        if base in blender_bases or base.__module__ in {'bpy_types', '_bpy_types'}:
+            continue
         method = vars(base).get(name)
         if method is not None:
             return method
